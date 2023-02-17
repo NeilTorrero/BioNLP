@@ -203,3 +203,5 @@ kaldi/
 
 
 *.csv
+NER_data/
+model/
