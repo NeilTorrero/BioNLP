@@ -2,17 +2,40 @@ import transformers
 from transformers import AutoTokenizer, AutoModel, AutoModelForTokenClassification, TrainingArguments, Trainer
 import evaluate
 import numpy as np
-from datasets import load_dataset
+from datasets import Dataset, DatasetDict, ClassLabel, Sequence, load_dataset, concatenate_datasets
 
 bc5cdr = load_dataset("tner/bc5cdr")
+ncbi = load_dataset("ncbi_disease")
+
+bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
+
+ncbi = ncbi.remove_columns('id')
+ncbi = ncbi.rename_column("ner_tags", "tags")
+ncbi = ncbi.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
+#Adapt tags to bc5cdr (1 -> 2, 2 -> 3)
+def change_tags(ex):
+    for i, tags in enumerate(ex['tags']):
+        for j, tag in enumerate(tags):
+            if tag == 1:
+                ex["tags"][i][j] = 2
+            else:
+                if tag == 2:
+                    ex["tags"][i][j] = 3
+    return ex
+
+ncbi_adapted = ncbi.map(change_tags, batched=True)
 #data_files = {'train': 'NER_data/BC5CDR/train.json', 'validation': 'NER_data/BC5CDR/valid.json', 'test': 'NER_data/BC5CDR/test.json'}
 #bc5cdr = load.load_dataset('json', data_files=data_files)
-print(bc5cdr)
+datasets = DatasetDict()
+datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi_adapted['train']])
+datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi_adapted['validation']])
+datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi_adapted['test']])
+print(datasets)
 
 labels_bio = ["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"]
 
 tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
-example = bc5cdr['train'][0]
+example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
 print(tokens)
@@ -36,7 +59,7 @@ def tokenize_and_realign(ex):
     tokenized_ex["labels"] = labels
     return tokenized_ex
 
-tokenized_dataset = bc5cdr.map(tokenize_and_realign, batched=True)
+tokenized_dataset = datasets.map(tokenize_and_realign, batched=True)
 
 from transformers import DataCollatorForTokenClassification
 data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
