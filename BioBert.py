@@ -8,7 +8,9 @@ bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
 
 bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
+bc5cdr = bc5cdr.filter(lambda example: len(example["tags"]) > 0)
 
+ncbi = ncbi.filter(lambda example: len(example["ner_tags"]) > 0)
 ncbi = ncbi.remove_columns('id')
 ncbi = ncbi.rename_column("ner_tags", "tags")
 ncbi = ncbi.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
@@ -38,7 +40,7 @@ tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
 example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
-print(tokens)
+#print(tokens)
 
 def tokenize_and_realign(ex):
     tokenized_ex = tokenizer(ex["tokens"], truncation=True, is_split_into_words=True)
@@ -92,8 +94,8 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Chemical", 2:"B-Disease", 3:"I-Disease", 4:"I-Chemical"}
 label2id = {"O":0, "B-Chemical":1, "B-Disease":2, "I-Disease":3, "I-Chemical":4}
 
-
-model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
+#model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
+model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
 training_args = TrainingArguments(
     output_dir="model",
     learning_rate=2e-5,
@@ -122,4 +124,5 @@ from transformers import pipeline
 
 finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer)
 
-finetunedmodel()
+res = finetunedmodel("ultrasound - at date 11:32 am - md first name last name name but coulnd't leave voicemail because her voicemail wasn't set up - patient refused ngt for kayexalate; k 6.5 at noon; ecg unremarkable. was able to take po well in p.m., received kayexalate; k down to 5.0 - renal u/s: no hydronephrosis no known drug allergies changes to and f review of systems is unchanged from admission except as noted below review of systems: last dose of antibiotics: azithromycin - date 10:46 am infusions: other icu medications: furosemide (lasix) - date 02:45 pm heparin sodium (prophylaxis) - date 04:23 pm other medications: flowsheet data as of date 08:14 am vital signs hemodynamic monitoring fluid balance 24 hours since number am tmax: (98 tcurrent: (97.8 hr: 72 (54 - 72) bpm bp: 120/59(74) {90/49(60) - 162/128(136)} mmhg rr: 20 (12 - 25) insp/min spo2: heart rhythm: sr (sinus rhythm) wgt (current): (admission): total in: po: tf: ivf: blood products: total out: urine: ng: stool: drains: balance: - respiratory support o2 delivery device: cpap mask ventilator mode: cpap/psv vt (spontaneous): 340 (340 - 340) ml ps : rr (spontaneous): 18 peep: fio2: pip: spo2: abg: 7.29/61/84.numeric identifier/30/0 ve: pao2 / fio2: 168 peripheral vascular: (right radial pulse: not assessed), (left radial pulse: not assessed), (right dp pulse: not assessed), (left dp pulse: not assessed) skin: not assessed neurologic: responds to: not assessed, movement: not assessed, tone: not assessed / date 01:50 am date 05:25 am date 07:42 am date 09:06 am date 06:10 pm date 05:14 am wbc 12.6 12.6 hct 40.2 37.6 plt 251 254 cr 2.5 2.5 2.1 tco2 30 33 31 glucose telephone/fax other labs: ck / ckmb / troponin-t:44//, differential-neuts:, lymph:, mono:, eos:, lactic acid:, ca++:, mg++:, po4: h/o hyperkalemia (high potassium, hyperpotassemia) .h/o hyperglycemia chronic obstructive pulmonary disease (copd, bronchitis, emphysema) with acute exacerbation a 59 year-old man presents with malaise and hypoxia")
+print(res)
