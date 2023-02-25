@@ -57,15 +57,12 @@ for idx in range(len(df.index)):
                 tokens[i-1] += tokens[i][2:]
                 tokens.pop(i)
                 tags.pop(i)
-        print(tokens)
         tokens_s.append(tokens)
-        print(tokens_ap)
-        input()
         tags_s.append(list(tags))
     else:
         tokens_s.append([])
         tags_s.append([])
-    text_o = df.loc[idx]['Subjective Sections']
+    text_o = df.loc[idx]['Objective Sections']
     if not pd.isna(text_o):
         ner_text_o = ner(text_o)
         tokens = []
