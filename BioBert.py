@@ -6,10 +6,14 @@ from datasets import Dataset, DatasetDict, ClassLabel, Sequence, load_dataset, c
 
 bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
+mimic = load_dataset('csv', data_files="BioNLP_dataset.csv")
+mimic.train_test_split(test_size=0.2)
 
+# Adapt BC5CDR
 bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
 bc5cdr = bc5cdr.filter(lambda example: len(example["tags"]) > 0)
 
+# Adapt NCBI
 ncbi = ncbi.filter(lambda example: len(example["ner_tags"]) > 0)
 ncbi = ncbi.remove_columns('id')
 ncbi = ncbi.rename_column("ner_tags", "tags")
@@ -26,21 +30,24 @@ def change_tags(ex):
     return ex
 
 ncbi_adapted = ncbi.map(change_tags, batched=True)
-#data_files = {'train': 'NER_data/BC5CDR/train.json', 'validation': 'NER_data/BC5CDR/valid.json', 'test': 'NER_data/BC5CDR/test.json'}
-#bc5cdr = load.load_dataset('json', data_files=data_files)
+
+# Adapt MIMIC
+
+
+# Merge
 datasets = DatasetDict()
-datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi_adapted['train']])
+datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi_adapted['train'],mimic['train']])
 datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi_adapted['validation']])
-datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi_adapted['test']])
+datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi_adapted['test'],mimic['test']])
 print(datasets)
 
 labels_bio = ["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"]
 
+# Tokenize and adapt datasets to tokenization
 tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
 example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
-#print(tokens)
 
 def tokenize_and_realign(ex):
     tokenized_ex = tokenizer(ex["tokens"], truncation=True, is_split_into_words=True)
