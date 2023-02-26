@@ -83,11 +83,11 @@ for idx in range(len(df.index)):
         tags_o.append([])
 
 
-df['tokens_ap'] = tokens_ap.astype('object')
-df['tags_ap'] = tags_ap.astype('object')
-df['tokens_s'] = tokens_s.astype('object')
-df['tags_s'] = tags_s.astype('object')
-df['tokens_o'] = tokens_o.astype('object')
-df['tags_o'] = tags_o.astype('object')
+df['tokens_ap'] = tokens_ap
+df['tags_ap'] = tags_ap
+df['tokens_s'] = tokens_s
+df['tags_s'] = tags_s
+df['tokens_o'] = tokens_o
+df['tags_o'] = tags_o
 df.to_csv('BioNLP_NER.csv')
 
