@@ -25,7 +25,7 @@ def make_next_window():
                         [sg.Frame('Objective', text_o, pad=10, key='_TEXT_O_')]],
                     key='_TEXT_',scrollable=True, expand_y=True)],
             [sg.Text('Summary: ' + df.loc[idx]['Summary'])],
-            [sg.Button('Next'), sg.Button('Save') ,sg.Exit()]]
+            [sg.Button('Previous'), sg.Button('Next'), sg.Button('Save') ,sg.Exit()]]
     return sg.Window('Example ' + str(idx), layout, size=(1600,600), finalize=True, resizable=True)
 
 
@@ -57,6 +57,11 @@ while True:
             w = 1
     elif event == 'Next':
         idx = idx+1
+        window2.close()
+        window2 = None
+        window2 = make_next_window()
+    elif event == 'Previous':
+        idx = idx-1
         window2.close()
         window2 = None
         window2 = make_next_window()
