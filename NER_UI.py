@@ -89,7 +89,7 @@ while True:
         df['tags_s'] = tags[1]
         df['tokens_o'] = tokens[2]
         df['tags_o'] = tags[2]
-        df.to_csv(filename)
+        df.to_csv(filename, index=False)
         print('File saved = ' + filename)
     else:
         # Toggle BIO tag
