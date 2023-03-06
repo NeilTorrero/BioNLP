@@ -2,12 +2,13 @@ import transformers
 from transformers import AutoTokenizer, AutoModel, AutoModelForTokenClassification, TrainingArguments, Trainer
 import evaluate
 import numpy as np
-from datasets import Dataset, DatasetDict, ClassLabel, Sequence, load_dataset, concatenate_datasets
+from ast import literal_eval
+from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dataset, concatenate_datasets
 
 bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
 mimic = load_dataset('csv', data_files="BioNLP_dataset.csv")
-mimic.train_test_split(test_size=0.2)
+mimic = mimic['train'].train_test_split(test_size=0.2)
 
 # Adapt BC5CDR
 bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
@@ -31,7 +32,18 @@ def change_tags(ex):
 
 ncbi_adapted = ncbi.map(change_tags, batched=True)
 
-# Adapt MIMIC
+# Adapt MIMIC don't needed here already been done in preprocessing
+def int_tags(ex):
+    ex_i = []
+    for i, tags in enumerate(ex['tags']):
+        ex['tags'][i] = literal_eval(ex['tags'][i])
+        ex['tokens'][i] = literal_eval(ex['tokens'][i])
+    return ex
+
+mimic = mimic.map(int_tags,batched=True)
+mimic = mimic.cast_column('tokens', Sequence(feature=Value(dtype='string', id=None), length=-1, id=None))
+mimic = mimic.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
+mimic = mimic.filter(lambda example: len(example["tags"]) > 0)
 
 
 # Merge
@@ -44,7 +56,9 @@ print(datasets)
 labels_bio = ["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"]
 
 # Tokenize and adapt datasets to tokenization
-tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
+#tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
+#tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
+tokenizer = AutoTokenizer.from_pretrained("alvaroalon2/biobert_diseases_ner")
 example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
@@ -102,13 +116,15 @@ id2label = {0:"O", 1:"B-Chemical", 2:"B-Disease", 3:"I-Disease", 4:"I-Chemical"}
 label2id = {"O":0, "B-Chemical":1, "B-Disease":2, "I-Disease":3, "I-Chemical":4}
 
 #model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
-model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
+#model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
+model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+
 training_args = TrainingArguments(
     output_dir="model",
     learning_rate=2e-5,
     per_device_train_batch_size=16,
     per_device_eval_batch_size=16,
-    num_train_epochs=2,
+    num_train_epochs=3,
     weight_decay=0.01,
     evaluation_strategy="epoch",
     save_strategy="epoch",
