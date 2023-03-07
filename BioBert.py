@@ -9,6 +9,13 @@ bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
 mimic = load_dataset('csv', data_files="BioNLP_dataset.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
+print(mimic)
+test_valid = mimic['test'].train_test_split(test_size=0.5)
+mimic = DatasetDict({
+    'train': mimic['train'],
+    'test': test_valid['test'],
+    'validation': test_valid['train']
+})
 
 # Adapt BC5CDR
 bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
@@ -49,7 +56,7 @@ mimic = mimic.filter(lambda example: len(example["tags"]) > 0)
 # Merge
 datasets = DatasetDict()
 datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi_adapted['train'],mimic['train']])
-datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi_adapted['validation']])
+datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi_adapted['validation'],mimic['validation']])
 datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi_adapted['test'],mimic['test']])
 print(datasets)
 
@@ -122,8 +129,9 @@ model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_dis
 training_args = TrainingArguments(
     output_dir="model",
     learning_rate=2e-5,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=16,
+    per_device_train_batch_size=4,
+    per_device_eval_batch_size=4,
+    gradient_accumulation_steps=4,
     num_train_epochs=3,
     weight_decay=0.01,
     evaluation_strategy="epoch",
@@ -143,9 +151,10 @@ trainer = Trainer(
 
 trainer.train()
 
-from transformers import pipeline
+#from transformers import pipeline
 
-finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer)
+#finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer)
 
-res = finetunedmodel("ultrasound - at date 11:32 am - md first name last name name but coulnd't leave voicemail because her voicemail wasn't set up - patient refused ngt for kayexalate; k 6.5 at noon; ecg unremarkable. was able to take po well in p.m., received kayexalate; k down to 5.0 - renal u/s: no hydronephrosis no known drug allergies changes to and f review of systems is unchanged from admission except as noted below review of systems: last dose of antibiotics: azithromycin - date 10:46 am infusions: other icu medications: furosemide (lasix) - date 02:45 pm heparin sodium (prophylaxis) - date 04:23 pm other medications: flowsheet data as of date 08:14 am vital signs hemodynamic monitoring fluid balance 24 hours since number am tmax: (98 tcurrent: (97.8 hr: 72 (54 - 72) bpm bp: 120/59(74) {90/49(60) - 162/128(136)} mmhg rr: 20 (12 - 25) insp/min spo2: heart rhythm: sr (sinus rhythm) wgt (current): (admission): total in: po: tf: ivf: blood products: total out: urine: ng: stool: drains: balance: - respiratory support o2 delivery device: cpap mask ventilator mode: cpap/psv vt (spontaneous): 340 (340 - 340) ml ps : rr (spontaneous): 18 peep: fio2: pip: spo2: abg: 7.29/61/84.numeric identifier/30/0 ve: pao2 / fio2: 168 peripheral vascular: (right radial pulse: not assessed), (left radial pulse: not assessed), (right dp pulse: not assessed), (left dp pulse: not assessed) skin: not assessed neurologic: responds to: not assessed, movement: not assessed, tone: not assessed / date 01:50 am date 05:25 am date 07:42 am date 09:06 am date 06:10 pm date 05:14 am wbc 12.6 12.6 hct 40.2 37.6 plt 251 254 cr 2.5 2.5 2.1 tco2 30 33 31 glucose telephone/fax other labs: ck / ckmb / troponin-t:44//, differential-neuts:, lymph:, mono:, eos:, lactic acid:, ca++:, mg++:, po4: h/o hyperkalemia (high potassium, hyperpotassemia) .h/o hyperglycemia chronic obstructive pulmonary disease (copd, bronchitis, emphysema) with acute exacerbation a 59 year-old man presents with malaise and hypoxia")
-print(res)
+#res = finetunedmodel("ultrasound - at date 11:32 am - md first name last name name but coulnd't leave voicemail because her voicemail wasn't set up - patient refused ngt for kayexalate; k 6.5 at noon; ecg unremarkable. was able to take po well in p.m., received kayexalate; k down to 5.0 - renal u/s: no hydronephrosis no known drug allergies changes to and f review of systems is unchanged from admission except as noted below review of systems: last dose of antibiotics: azithromycin - date 10:46 am infusions: other icu medications: furosemide (lasix) - date 02:45 pm heparin sodium (prophylaxis) - date 04:23 pm other medications: flowsheet data as of date 08:14 am vital signs hemodynamic monitoring fluid balance 24 hours since number am tmax: (98 tcurrent: (97.8 hr: 72 (54 - 72) bpm bp: 120/59(74) {90/49(60) - 162/128(136)} mmhg rr: 20 (12 - 25) insp/min spo2: heart rhythm: sr (sinus rhythm) wgt (current): (admission): total in: po: tf: ivf: blood products: total out: urine: ng: stool: drains: balance: - respiratory support o2 delivery device: cpap mask ventilator mode: cpap/psv vt (spontaneous): 340 (340 - 340) ml ps : rr (spontaneous): 18 peep: fio2: pip: spo2: abg: 7.29/61/84.numeric identifier/30/0 ve: pao2 / fio2: 168 peripheral vascular: (right radial pulse: not assessed), (left radial pulse: not assessed), (right dp pulse: not assessed), (left dp pulse: not assessed) skin: not assessed neurologic: responds to: not assessed, movement: not assessed, tone: not assessed / date 01:50 am date 05:25 am date 07:42 am date 09:06 am date 06:10 pm date 05:14 am wbc 12.6 12.6 hct 40.2 37.6 plt 251 254 cr 2.5 2.5 2.1 tco2 30 33 31 glucose telephone/fax other labs: ck / ckmb / troponin-t:44//, differential-neuts:, lymph:, mono:, eos:, lactic acid:, ca++:, mg++:, po4: h/o hyperkalemia (high potassium, hyperpotassemia) .h/o hyperglycemia chronic obstructive pulmonary disease (copd, bronchitis, emphysema) with acute exacerbation a 59 year-old man presents with malaise and hypoxia")
+#print(res)
+
