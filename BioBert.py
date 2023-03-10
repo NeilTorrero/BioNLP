@@ -124,7 +124,7 @@ label2id = {"O":0, "B-Chemical":1, "B-Disease":2, "I-Disease":3, "I-Chemical":4}
 
 #model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
 #model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
-model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=5, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
 
 training_args = TrainingArguments(
     output_dir="model",
@@ -132,7 +132,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=4,
-    num_train_epochs=3,
+    num_train_epochs=4,
     weight_decay=0.01,
     evaluation_strategy="epoch",
     save_strategy="epoch",
@@ -143,13 +143,31 @@ trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_dataset["train"],
-    eval_dataset=tokenized_dataset["test"],
+    eval_dataset=tokenized_dataset["validation"],
     tokenizer=tokenizer,
     data_collator=data_collator,
     compute_metrics=compute_metrics
 )
 
 trainer.train()
+
+trainer.evaluate()
+
+predictions, labels, _ = trainer.predict(tokenized_dataset["test"])
+predictions = np.argmax(predictions, axis=2)
+
+# Remove ignored index (special tokens)
+true_predictions = [
+    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
+    for prediction, label in zip(predictions, labels)
+]
+true_labels = [
+    [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
+    for prediction, label in zip(predictions, labels)
+]
+
+results = seqeval.compute(predictions=true_predictions, references=true_labels)
+print(results)
 
 #from transformers import pipeline
 
