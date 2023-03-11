@@ -65,7 +65,8 @@ labels_bio = ["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"]
 # Tokenize and adapt datasets to tokenization
 #tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
 #tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
-tokenizer = AutoTokenizer.from_pretrained("alvaroalon2/biobert_diseases_ner")
+#tokenizer = AutoTokenizer.from_pretrained("alvaroalon2/biobert_diseases_ner")
+tokenizer = AutoTokenizer.from_pretrained("bert-large-uncased")
 example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
@@ -124,7 +125,8 @@ label2id = {"O":0, "B-Chemical":1, "B-Disease":2, "I-Disease":3, "I-Chemical":4}
 
 #model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
 #model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
-model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=5, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+#model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=5, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+model = AutoModelForTokenClassification.from_pretrained("bert-large-uncased", num_labels=5, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
 
 training_args = TrainingArguments(
     output_dir="model",
