@@ -63,7 +63,7 @@ print(datasets)
 labels_bio = ["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"]
 
 # Tokenize and adapt datasets to tokenization
-tokenizer = AutoTokenizer.from_pretrained("alvaroalon2/biobert_diseases_ner")
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
@@ -104,16 +104,18 @@ class BertCRF(nn.Module):
         super(BertCRF, self).__init__()
         self.num_labels = num_labels
 
-        self.model = model = AutoModelForTokenClassification.from_pretrained(checkpoint, ignore_mismatched_sizes=True, config=AutoConfig.from_pretrained(checkpoint, num_labels=num_labels, id2label=id2label, label2id=label2id, output_attentions=True, output_hidden_states=True))
+        self.bert = AutoModelForTokenClassification.from_pretrained(checkpoint, ignore_mismatched_sizes=True, config=AutoConfig.from_pretrained(checkpoint, num_labels=num_labels, id2label=id2label, label2id=label2id, output_attentions=True, output_hidden_states=True))
         self.dropout = nn.Dropout(0.1)
-        self.classifier = nn.Linear(768, num_labels)
+        self.classifier = nn.Linear(270, num_labels)
         self.crf = CRF(num_tags=num_labels, batch_first = True)
     
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None):
-        outputs = self.model(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
-        logits = self.classifier(sequence_output)
+        print(sequence_output.shape)
+        b, t, c = sequence_output.shape
+        logits = self.classifier(sequence_output.view(b, -1))
         outputs = (logits,)
         if labels is not None:
             loss = self.crf(emissions = logits, tags=labels, mask=attention_mask)
@@ -151,7 +153,7 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Chemical", 2:"B-Disease", 3:"I-Disease", 4:"I-Chemical"}
 label2id = {"O":0, "B-Chemical":1, "B-Disease":2, "I-Disease":3, "I-Chemical":4}
 
-model = BertCRF(checkpoint="alvaroalon2/biobert_diseases_ner", num_labels=5, id2label=id2label, label2id=label2id)
+model = BertCRF(checkpoint="bert-base-uncased", num_labels=5, id2label=id2label, label2id=label2id)
 
 training_args = TrainingArguments(
     output_dir="modelcrf",
