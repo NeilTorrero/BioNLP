@@ -18,26 +18,44 @@ mimic = DatasetDict({
 })
 
 # Adapt BC5CDR
-bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
+#Rework chemical tags bc5cdr
+def rework_tags(ex):
+    for i, tags in enumerate(ex['tags']):
+        for j, tag in enumerate(tags):
+            if tag == 1:
+                ex["tags"][i][j] = 0
+            elif tag == 2:
+                ex["tags"][i][j] = 1
+            elif tag == 3:
+                ex["tags"][i][j] = 2
+            elif tag == 4:
+                ex["tags"][i][j] = 0
+    return ex
+
+bc5cdr = bc5cdr.map(rework_tags, batched=True)
+#bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
+bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
 bc5cdr = bc5cdr.filter(lambda example: len(example["tags"]) > 0)
 
 # Adapt NCBI
 ncbi = ncbi.filter(lambda example: len(example["ner_tags"]) > 0)
 ncbi = ncbi.remove_columns('id')
 ncbi = ncbi.rename_column("ner_tags", "tags")
-ncbi = ncbi.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
-#Adapt tags to bc5cdr (1 -> 2, 2 -> 3)
-def change_tags(ex):
-    for i, tags in enumerate(ex['tags']):
-        for j, tag in enumerate(tags):
-            if tag == 1:
-                ex["tags"][i][j] = 2
-            else:
-                if tag == 2:
-                    ex["tags"][i][j] = 3
-    return ex
+#ncbi = ncbi.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
+ncbi = ncbi.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
 
-ncbi_adapted = ncbi.map(change_tags, batched=True)
+#Adapt tags to bc5cdr (1 -> 2, 2 -> 3)
+#def change_tags(ex):
+#    for i, tags in enumerate(ex['tags']):
+#        for j, tag in enumerate(tags):
+#            if tag == 1:
+#                ex["tags"][i][j] = 2
+#            else:
+#                if tag == 2:
+#                    ex["tags"][i][j] = 3
+#    return ex
+
+#ncbi = ncbi.map(change_tags, batched=True)
 
 # Adapt MIMIC don't needed here already been done in preprocessing
 def int_tags(ex):
@@ -49,18 +67,18 @@ def int_tags(ex):
 
 mimic = mimic.map(int_tags,batched=True)
 mimic = mimic.cast_column('tokens', Sequence(feature=Value(dtype='string', id=None), length=-1, id=None))
-mimic = mimic.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
+mimic = mimic.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
 mimic = mimic.filter(lambda example: len(example["tags"]) > 0)
 
 
 # Merge
 datasets = DatasetDict()
-datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi_adapted['train'],mimic['train']])
-datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi_adapted['validation'],mimic['validation']])
-datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi_adapted['test'],mimic['test']])
+datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi['train'],mimic['train']])
+datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi['validation'],mimic['validation']])
+datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi['test'],mimic['test']])
 print(datasets)
 
-labels_bio = ["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"]
+labels_bio = ["O", "B-Disease", "I-Disease"]
 
 # Tokenize and adapt datasets to tokenization
 #tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
@@ -120,13 +138,13 @@ def compute_metrics(p):
         "accuracy": results["overall_accuracy"],
     }
 
-id2label = {0:"O", 1:"B-Chemical", 2:"B-Disease", 3:"I-Disease", 4:"I-Chemical"}
-label2id = {"O":0, "B-Chemical":1, "B-Disease":2, "I-Disease":3, "I-Chemical":4}
+id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
+label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
 #model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
 #model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
-#model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=5, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
-model = AutoModelForTokenClassification.from_pretrained("bert-large-uncased", num_labels=5, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+#model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+model = AutoModelForTokenClassification.from_pretrained("bert-large-uncased", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
 
 training_args = TrainingArguments(
     output_dir="model",

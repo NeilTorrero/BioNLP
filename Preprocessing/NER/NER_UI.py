@@ -7,8 +7,8 @@ filename = ''
 tags = [[],[],[]]
 tokens = [[],[],[]]
 idx = 0
-# Color for B-I-O (2-3-0) Label following BC5CDR dataset Tag dictionary
-colors = {0: 'grey', 2: 'red', 3:'green'}
+# Color for B-I-O (1-2-0) Label following BC5CDR dataset Tag dictionary (reworked for only disease)
+colors = {0: 'grey', 1: 'red', 2:'green'}
 
 
 # NER checking layouts
@@ -94,10 +94,10 @@ while True:
     else:
         # Toggle BIO tag
         if tags[event[1]][idx][event[2]] == 0:
+            tags[event[1]][idx][event[2]] = 1
+        elif tags[event[1]][idx][event[2]] == 1:
             tags[event[1]][idx][event[2]] = 2
         elif tags[event[1]][idx][event[2]] == 2:
-            tags[event[1]][idx][event[2]] = 3
-        elif tags[event[1]][idx][event[2]] == 3:
             tags[event[1]][idx][event[2]] = 0
         # Updating color on layout
         window2[event].update(tokens[event[1]][idx][event[2]], button_color=colors[tags[event[1]][idx][event[2]]])

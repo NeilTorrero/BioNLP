@@ -4,8 +4,8 @@ import re
 
 entity = {
     "0": 0,
-    "B-DISEASE": 2,
-    "I-DISEASE": 3,
+    "B-DISEASE": 1,
+    "I-DISEASE": 2,
 }
 tokenizer = AutoTokenizer.from_pretrained("alvaroalon2/biobert_diseases_ner")
 #tokenizer = AutoTokenizer.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
