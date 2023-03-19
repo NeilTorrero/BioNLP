@@ -59,7 +59,6 @@ ncbi = ncbi.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disea
 
 # Adapt MIMIC don't needed here already been done in preprocessing
 def int_tags(ex):
-    ex_i = []
     for i, tags in enumerate(ex['tags']):
         ex['tags'][i] = literal_eval(ex['tags'][i])
         ex['tokens'][i] = literal_eval(ex['tokens'][i])
@@ -156,7 +155,8 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     evaluation_strategy="epoch",
     save_strategy="epoch",
-    load_best_model_at_end=True
+    load_best_model_at_end=True,
+    metric_for_best_model="loss"
 )
 
 trainer = Trainer(
@@ -170,6 +170,7 @@ trainer = Trainer(
 )
 
 trainer.train()
+trainer.save_model('model/end/')
 
 trainer.evaluate()
 
