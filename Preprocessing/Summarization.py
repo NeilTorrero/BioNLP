@@ -42,7 +42,7 @@ rouge_score = evaluate.load("rouge")
 
 model = AutoModelForSeq2SeqLM.from_pretrained("t5-base")
 
-batch_size = 8
+batch_size = 4
 num_train_epochs = 8
 # Show the training loss with every epoch
 logging_steps = len(tokenized_datasets["train"]) // batch_size
@@ -53,6 +53,7 @@ args = Seq2SeqTrainingArguments(
     learning_rate=5.6e-5,
     per_device_train_batch_size=batch_size,
     per_device_eval_batch_size=batch_size,
+    gradient_accumulation_steps=batch_size,
     weight_decay=0.01,
     save_total_limit=3,
     num_train_epochs=num_train_epochs,
