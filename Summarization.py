@@ -5,7 +5,7 @@ import numpy as np
 from nltk.tokenize import sent_tokenize
 
 
-mimic = load_dataset('csv', data_files="Preprocessing/BioNLP_PP_SOAP.csv")
+mimic = load_dataset('csv', data_files="Preprocessing/BioNLP_PP_SAP.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
 test_valid = mimic['test'].train_test_split(test_size=0.5)
 mimic = DatasetDict({
