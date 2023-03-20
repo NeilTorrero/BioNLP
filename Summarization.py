@@ -15,8 +15,7 @@ mimic = DatasetDict({
 })
 
 
-
-tokenizer = AutoTokenizer.from_pretrained("t5-base")
+tokenizer = AutoTokenizer.from_pretrained("flan-t5-base")
 
 max_input_length = 1024
 max_target_length = 256
@@ -40,7 +39,7 @@ tokenized_datasets = mimic.map(preprocess_function, batched=True)
 
 rouge_score = evaluate.load("rouge")
 
-model = AutoModelForSeq2SeqLM.from_pretrained("t5-base")
+model = AutoModelForSeq2SeqLM.from_pretrained("flan-t5-base")
 
 batch_size = 4
 num_train_epochs = 8

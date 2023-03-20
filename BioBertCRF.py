@@ -77,16 +77,12 @@ def tokenize_and_realign(ex):
     labels = []
     for i, label in enumerate(ex["tags"]):
         word_ids = tokenized_ex.word_ids(batch_index=i)
-        previous_word_idx = None
         label_ids = []
         for word_idx in word_ids:
             if word_idx is None:
-                label_ids.append(-100)
-            elif word_idx != previous_word_idx:  # Only label the first token of a given word.
-                label_ids.append(label[word_idx])
+                label_ids.append(0)
             else:
-                label_ids.append(-100)
-            previous_word_idx = word_idx
+                label_ids.append(label[word_idx])
         labels.append(label_ids)
     tokenized_ex["labels"] = labels
     return tokenized_ex
@@ -94,7 +90,7 @@ def tokenize_and_realign(ex):
 tokenized_dataset = datasets.map(tokenize_and_realign, batched=True)
 
 from transformers import DataCollatorForTokenClassification
-data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
+data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer, label_pad_token_id=0)
 
 
 
@@ -110,19 +106,15 @@ class BertCRF(nn.Module):
 
         self.bert = AutoModelForTokenClassification.from_pretrained(checkpoint, ignore_mismatched_sizes=True, config=AutoConfig.from_pretrained(checkpoint, num_labels=num_labels, id2label=id2label, label2id=label2id, output_attentions=True, output_hidden_states=True))
         self.dropout = nn.Dropout(0.1)
-        self.classifier = nn.Linear(270, num_labels)
         self.crf = CRF(num_tags=num_labels, batch_first = True)
     
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
-        print(sequence_output.shape)
-        b, t, c = sequence_output.shape
-        logits = self.classifier(sequence_output.view(b, -1))
-        outputs = (logits,)
+        outputs = (sequence_output,)
         if labels is not None:
-            loss = self.crf(emissions = logits, tags=labels, mask=attention_mask)
+            loss = self.crf(emissions = sequence_output, tags=labels, mask=attention_mask)
             outputs =(-1*loss,)+outputs
         return outputs
 
@@ -176,12 +168,45 @@ trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_dataset["train"],
-    eval_dataset=tokenized_dataset["test"],
+    eval_dataset=tokenized_dataset["validation"],
     tokenizer=tokenizer,
     data_collator=data_collator,
     compute_metrics=compute_metrics
 )
 
 trainer.train()
+trainer.evaluate()
 
-# Bert sin el head, pasar el output del bert sin el head a un crf
+predictions, labels, _ = trainer.predict(tokenized_dataset["test"])
+predictions = np.argmax(predictions, axis=2)
+
+# Remove ignored index (special tokens)
+true_predictions = [
+    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
+    for prediction, label in zip(predictions, labels)
+]
+true_labels = [
+    [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
+    for prediction, label in zip(predictions, labels)
+]
+
+results = seqeval.compute(predictions=true_predictions, references=true_labels)
+print('All datasets test')
+print(results)
+
+predictions, labels, _ = trainer.predict(mimic["test"])
+predictions = np.argmax(predictions, axis=2)
+
+# Remove ignored index (special tokens)
+true_predictions = [
+    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
+    for prediction, label in zip(predictions, labels)
+]
+true_labels = [
+    [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
+    for prediction, label in zip(predictions, labels)
+]
+
+results = seqeval.compute(predictions=true_predictions, references=true_labels)
+print('Only MIMIC')
+print(results)
