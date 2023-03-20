@@ -67,7 +67,7 @@ print(datasets)
 labels_bio = ["O", "B-Disease", "I-Disease"]
 
 # Tokenize and adapt datasets to tokenization
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+tokenizer = AutoTokenizer.from_pretrained("bert-large-uncased")
 example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
@@ -88,6 +88,7 @@ def tokenize_and_realign(ex):
     return tokenized_ex
 
 tokenized_dataset = datasets.map(tokenize_and_realign, batched=True)
+tokenized_mimic = mimic.map(tokenize_and_realign, batched=True)
 
 from transformers import DataCollatorForTokenClassification
 data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer, label_pad_token_id=0)
@@ -149,19 +150,20 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
 label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
-model = BertCRF(checkpoint="bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id)
+model = BertCRF(checkpoint="bert-large-uncased", num_labels=3, id2label=id2label, label2id=label2id)
 
 training_args = TrainingArguments(
     output_dir="modelcrf",
     learning_rate=2e-5,
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
-    gradient_accumulation_steps=4,
-    num_train_epochs=4,
+    gradient_accumulation_steps=2,
+    num_train_epochs=10,
     weight_decay=0.01,
     evaluation_strategy="epoch",
     save_strategy="epoch",
-    load_best_model_at_end=True
+    load_best_model_at_end=True,
+    metric_for_best_model="loss"
 )
 
 trainer = Trainer(
