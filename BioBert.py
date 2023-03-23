@@ -192,7 +192,7 @@ results = seqeval.compute(predictions=true_predictions, references=true_labels)
 print('All datasets test')
 print(results)
 
-predictions, labels, _ = trainer.predict(mimic["test"])
+predictions, labels, _ = trainer.predict(tokenized_mimic["test"])
 predictions = np.argmax(predictions, axis=2)
 
 # Remove ignored index (special tokens)

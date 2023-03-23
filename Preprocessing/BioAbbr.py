@@ -3,6 +3,11 @@ import nltk
 from nltk.tokenize import word_tokenize
 import medialpy
 
+# python 3.6
+#from nlpre import replace_acronyms
+#pairs = replace_acronyms('h/o hyperglycemia chronic obstructive pulmonary disease (copd, bronchitis, emphysema) with acute exacerbation a 59 year-old man presents with malaise and hypoxia')
+#print(pairs)
+
 df = pd.read_csv(r'BioNLP2023-1A-Train.csv')
 #remove rows with empty GT
 df = df.dropna(subset=['Summary']).reset_index(drop=True)
