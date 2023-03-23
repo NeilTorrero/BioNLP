@@ -93,18 +93,25 @@ def tokenize_and_realign(ex):
     labels = []
     for i, label in enumerate(ex["tags"]):
         word_ids = tokenized_ex.word_ids(batch_index=i)
+        #print(word_ids)
+        #print(label)
+        #print(tokenizer.convert_ids_to_tokens(tokenized_ex["input_ids"][i]))
+        #input()
         previous_word_idx = None
         label_ids = []
         for word_idx in word_ids:
             if word_idx is None:
                 label_ids.append(-100)
-            elif word_idx != previous_word_idx:  # Only label the first token of a given word.
+            elif word_idx != previous_word_idx:
                 label_ids.append(label[word_idx])
             else:
-                label_ids.append(-100)
+                label_ids.append(label[previous_word_idx])
             previous_word_idx = word_idx
         labels.append(label_ids)
     tokenized_ex["labels"] = labels
+    print(tokenized_ex["labels"][0])
+    print(tokenizer.convert_ids_to_tokens(tokenized_ex["input_ids"][0]))
+    input()
     return tokenized_ex
 
 tokenized_dataset = datasets.map(tokenize_and_realign, batched=True)

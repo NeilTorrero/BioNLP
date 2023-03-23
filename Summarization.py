@@ -41,7 +41,7 @@ rouge_score = evaluate.load("rouge")
 
 model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
 
-batch_size = 4
+batch_size = 2
 num_train_epochs = 8
 # Show the training loss with every epoch
 logging_steps = len(tokenized_datasets["train"]) // batch_size
