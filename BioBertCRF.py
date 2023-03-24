@@ -35,6 +35,7 @@ def rework_tags(ex):
 bc5cdr = bc5cdr.map(rework_tags, batched=True)
 bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
 bc5cdr = bc5cdr.filter(lambda example: len(example["tags"]) > 0)
+bc5cdr = bc5cdr.filter(lambda ex: 1 in ex['tags'] or 2 in ex['tags'])
 
 # Adapt NCBI
 ncbi = ncbi.filter(lambda example: len(example["ner_tags"]) > 0)
@@ -131,16 +132,16 @@ seqeval = evaluate.load("seqeval")
 labels = [labels_bio[i] for i in example["tags"]]
 
 def compute_metrics(p):
-    predictions, labels = p
-    predictions = np.argmax(predictions, axis=2)
+    logits, labels = p
+    predictions = np.argmax(logits, axis=-1)
 
     true_predictions = [
         [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
     true_labels = [
-        [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
-        for prediction, label in zip(predictions, labels)
+        [labels_bio[l] for l in label if l != -100]
+        for label in labels
     ]
 
     results = seqeval.compute(predictions=true_predictions, references=true_labels)
@@ -183,8 +184,8 @@ trainer = Trainer(
 trainer.train()
 trainer.evaluate()
 
-predictions, labels, _ = trainer.predict(tokenized_dataset["test"])
-predictions = np.argmax(predictions, axis=2)
+logits, labels, _ = trainer.predict(tokenized_dataset["test"])
+predictions = np.argmax(logits, axis=-1)
 
 # Remove ignored index (special tokens)
 true_predictions = [
@@ -192,16 +193,16 @@ true_predictions = [
     for prediction, label in zip(predictions, labels)
 ]
 true_labels = [
-    [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
-    for prediction, label in zip(predictions, labels)
+    [labels_bio[l] for l in label if l != -100]
+    for label in labels
 ]
 
 results = seqeval.compute(predictions=true_predictions, references=true_labels)
 print('All datasets test')
 print(results)
 
-predictions, labels, _ = trainer.predict(tokenized_mimic["test"])
-predictions = np.argmax(predictions, axis=2)
+logits, labels, _ = trainer.predict(tokenized_mimic["test"])
+predictions = np.argmax(logits, axis=-1)
 
 # Remove ignored index (special tokens)
 true_predictions = [
@@ -209,8 +210,8 @@ true_predictions = [
     for prediction, label in zip(predictions, labels)
 ]
 true_labels = [
-    [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
-    for prediction, label in zip(predictions, labels)
+    [labels_bio[l] for l in label if l != -100]
+    for label in labels
 ]
 
 results = seqeval.compute(predictions=true_predictions, references=true_labels)

@@ -83,7 +83,7 @@ labels_bio = ["O", "B-Disease", "I-Disease"]
 #tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
 #tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
 #tokenizer = AutoTokenizer.from_pretrained("alvaroalon2/biobert_diseases_ner")
-tokenizer = AutoTokenizer.from_pretrained("bert-large-uncased")
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
@@ -144,18 +144,23 @@ label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 #model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
 #model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
 #model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
-model = AutoModelForTokenClassification.from_pretrained("bert-large-uncased", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+model = AutoModelForTokenClassification.from_pretrained("bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
 
 training_args = TrainingArguments(
     output_dir="model",
-    learning_rate=2e-5,
+    learning_rate=5e-5,
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=2,
-    num_train_epochs=10,
+    num_train_epochs=4,
+#   num_train_epochs=2,
     weight_decay=0.01,
     evaluation_strategy="epoch",
     save_strategy="epoch",
+#    evaluation_strategy="steps",
+#    save_strategy="steps",
+#    logging_steps=100,
+#    eval_steps=100,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )
