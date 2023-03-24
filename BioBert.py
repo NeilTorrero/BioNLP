@@ -175,8 +175,8 @@ trainer.save_model('model/end/')
 
 trainer.evaluate()
 
-predictions, labels, _ = trainer.predict(tokenized_dataset["test"])
-predictions = np.argmax(predictions, axis=2)
+logits, labels, _ = trainer.predict(tokenized_dataset["test"])
+predictions = np.argmax(logits, axis=-1)
 
 # Remove ignored index (special tokens)
 true_predictions = [
@@ -184,16 +184,16 @@ true_predictions = [
     for prediction, label in zip(predictions, labels)
 ]
 true_labels = [
-    [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
-    for prediction, label in zip(predictions, labels)
+    [labels_bio[l] for l in label if l != -100]
+    for label in labels
 ]
 
 results = seqeval.compute(predictions=true_predictions, references=true_labels)
 print('All datasets test')
 print(results)
 
-predictions, labels, _ = trainer.predict(tokenized_mimic["test"])
-predictions = np.argmax(predictions, axis=2)
+logits, labels, _ = trainer.predict(tokenized_mimic["test"])
+predictions = np.argmax(logits, axis=-1)
 
 # Remove ignored index (special tokens)
 true_predictions = [
@@ -201,8 +201,8 @@ true_predictions = [
     for prediction, label in zip(predictions, labels)
 ]
 true_labels = [
-    [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
-    for prediction, label in zip(predictions, labels)
+    [labels_bio[l] for l in label if l != -100]
+    for label in labels
 ]
 
 results = seqeval.compute(predictions=true_predictions, references=true_labels)
