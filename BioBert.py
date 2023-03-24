@@ -36,7 +36,7 @@ bc5cdr = bc5cdr.map(rework_tags, batched=True)
 #bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Chemical", "B-Disease", "I-Disease", "I-Chemical"], id=None), length=-1, id=None))
 bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
 bc5cdr = bc5cdr.filter(lambda example: len(example["tags"]) > 0)
-
+bc5cdr = bc5cdr.filter(lambda ex: 1 in ex['tags'] or 2 in ex['tags'])
 # Adapt NCBI
 ncbi = ncbi.filter(lambda example: len(example["ner_tags"]) > 0)
 ncbi = ncbi.remove_columns('id')
