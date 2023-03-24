@@ -118,16 +118,16 @@ seqeval = evaluate.load("seqeval")
 labels = [labels_bio[i] for i in example["tags"]]
 
 def compute_metrics(p):
-    predictions, labels = p
-    predictions = np.argmax(predictions, axis=2)
+    logits, labels = p
+    predictions = np.argmax(logits, axis=-1)
 
     true_predictions = [
         [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
     true_labels = [
-        [labels_bio[l] for (p, l) in zip(prediction, label) if l != -100]
-        for prediction, label in zip(predictions, labels)
+        [labels_bio[l] for l in label if l != -100]
+        for label in labels
     ]
 
     results = seqeval.compute(predictions=true_predictions, references=true_labels)
