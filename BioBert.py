@@ -108,7 +108,9 @@ def tokenize_and_realign(ex):
     return tokenized_ex
 
 tokenized_dataset = datasets.map(tokenize_and_realign, batched=True)
+tokenized_dataset = tokenized_dataset.remove_columns(['tokens', 'tags'])
 tokenized_mimic = mimic.map(tokenize_and_realign, batched=True)
+tokenized_mimic = tokenized_mimic.remove_columns(['tokens', 'tags'])
 
 from transformers import DataCollatorForTokenClassification
 data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
@@ -153,14 +155,11 @@ training_args = TrainingArguments(
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=2,
     num_train_epochs=4,
-#   num_train_epochs=2,
     weight_decay=0.01,
-    evaluation_strategy="epoch",
-    save_strategy="epoch",
-#    evaluation_strategy="steps",
-#    save_strategy="steps",
-#    logging_steps=100,
-#    eval_steps=100,
+    evaluation_strategy="steps",
+    save_strategy="steps",
+    logging_steps=10,
+    eval_steps=10,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )
