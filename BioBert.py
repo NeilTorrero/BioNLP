@@ -124,11 +124,11 @@ def compute_metrics(p):
     predictions = np.argmax(logits, axis=-1)
 
     true_predictions = [
-        [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
+        [labels_bio[p] for (p, l) in zip(prediction, label) if (l != -100 and l != 0)]#l != -100]
         for prediction, label in zip(predictions, labels)
     ]
     true_labels = [
-        [labels_bio[l] for l in label if l != -100]
+        [labels_bio[l] for l in label if (l != -100 and l != 0)]#l != -100]
         for label in labels
     ]
 
@@ -184,11 +184,11 @@ predictions = np.argmax(logits, axis=-1)
 
 # Remove ignored index (special tokens)
 true_predictions = [
-    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
+    [labels_bio[p] for (p, l) in zip(prediction, label) if (l != -100 and l != 0)]#l != -100]
     for prediction, label in zip(predictions, labels)
 ]
 true_labels = [
-    [labels_bio[l] for l in label if l != -100]
+    [labels_bio[l] for l in label if (l != -100 and l != 0)]#l != -100]
     for label in labels
 ]
 
@@ -201,11 +201,11 @@ predictions = np.argmax(logits, axis=-1)
 
 # Remove ignored index (special tokens)
 true_predictions = [
-    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
+    [labels_bio[p] for (p, l) in zip(prediction, label) if (l != -100 and l != 0)]#l != -100]
     for prediction, label in zip(predictions, labels)
 ]
 true_labels = [
-    [labels_bio[l] for l in label if l != -100]
+    [labels_bio[l] for l in label if (l != -100 and l != 0)]#l != -100]
     for label in labels
 ]
 
