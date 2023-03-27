@@ -2,6 +2,8 @@ import transformers
 from transformers import AutoTokenizer, AutoModel, AutoModelForTokenClassification, TrainingArguments, Trainer
 import evaluate
 import numpy as np
+import torch
+from torch import nn
 from ast import literal_eval
 from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dataset, concatenate_datasets
 
@@ -76,6 +78,15 @@ datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi['train'],mimic['t
 datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi['validation'],mimic['validation']])
 datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi['test'],mimic['test']])
 print(datasets)
+
+from sklearn.utils import class_weight
+
+class_weights=class_weight.compute_class_weight(class_weight='balanced',classes=np.unique(np.concatenate(datasets['train']['tags'])),y=np.concatenate(datasets['train']['tags']))
+class_weights=torch.tensor(class_weights,dtype=torch.float)
+
+print('Class weights:')
+print(class_weights)
+
 
 labels_bio = ["O", "B-Disease", "I-Disease"]
 
@@ -164,7 +175,23 @@ training_args = TrainingArguments(
     metric_for_best_model="loss"
 )
 
-trainer = Trainer(
+
+class LossTrainer(Trainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.get("labels")
+        # forward pass
+        outputs = model(**inputs)
+        logits = outputs.get("logits")
+        # compute custom loss (suppose one has 3 labels with different weights)
+        loss_fct = nn.CrossEntropyLoss(weight=class_weights)
+        loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        return (loss, outputs) if return_outputs else loss
+
+
+trainer = LossTrainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_dataset["train"],
