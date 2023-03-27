@@ -158,8 +158,8 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
-    logging_steps=10,
-    eval_steps=10,
+    logging_steps=100,
+    eval_steps=100,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )

@@ -5,17 +5,18 @@ import evaluate
 from ast import literal_eval
 import torch
 
-#from transformers import AutoModelForTokenClassification, pipeline, AutoTokenizer
+from transformers import AutoModelForTokenClassification, pipeline, AutoTokenizer
 
-#tokenizer = AutoTokenizer.from_pretrained("model/checkpoint-1560", local_files_only=True)
-#model = AutoModelForTokenClassification.from_pretrained("model/checkpoint-1560", local_files_only=True)
+tokenizer = AutoTokenizer.from_pretrained("model/end", local_files_only=True)
+model = AutoModelForTokenClassification.from_pretrained("model/end", local_files_only=True)
 
-#finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy='average')
+finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy='average')
 
-#res = finetunedmodel("acute exacerbation a 59 year-old man presents with afib, malaise, heart attack and hypoxia")
+res = finetunedmodel("acute exacerbation a 59 year-old man presents with afib, malaise, heart attack and hypoxia")
 #print(res)
 
-mimic = load_dataset('csv', data_files="Preprocessing/NER/BioT2S.csv")
+#mimic = load_dataset('csv', data_files="Preprocessing/NER/BioT2S.csv")
+mimic = load_dataset('csv', data_files="Preprocessing/BioNLP_PP_SAP.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
 test_valid = mimic['test'].train_test_split(test_size=0.5)
 mimic = DatasetDict({
@@ -26,15 +27,16 @@ mimic = DatasetDict({
 
 
 def fix_words(ex):
-    for i, w in enumerate(ex['words']):
-        ex['words'][i] = literal_eval(ex['words'][i])
-        ex['summary'][i] = str(ex['summary'][i]).lower()
+    for i, w in enumerate(ex['Words']):
+        #ex['Words'][i] = literal_eval(ex['Words'][i])
+        ex['Summary'][i] = str(ex['Summary'][i]).lower()
     return ex
 
 mimic = mimic.map(fix_words, batched=True)
-mimic = mimic.cast_column('words', Sequence(feature=Value(dtype='string', id=None), length=-1, id=None))
-mimic = mimic.cast_column('summary', Value(dtype='string', id=None))
-mimic = mimic.filter(lambda example: len(example["words"]) > 0)
+#mimic = mimic.cast_column('words', Sequence(feature=Value(dtype='string', id=None), length=-1, id=None))
+mimic = mimic.cast_column('Text', Value(dtype='string', id=None))
+mimic = mimic.cast_column('Summary', Value(dtype='string', id=None))
+mimic = mimic.filter(lambda example: len(example["Text"]) > 0)
 
 print(mimic)
 
@@ -43,8 +45,13 @@ rouge = evaluate.load("rouge")
 for ex in mimic['train']:
     predictions = []
     references = []
-    predictions.append('; '.join(list(dict.fromkeys(ex['words']))))
-    references.append(ex['summary'])
+    words = ""
+    res = finetunedmodel(ex['Text'])
+    for match in res:
+        words += match['word'] + '; '
+    #words = '; '.join(list(dict.fromkeys(ex['words'])))
+    predictions.append(words)
+    references.append(ex['Summary'])
     rouge.add_batch(predictions=predictions, references=references)
 
 final_score = rouge.compute()
