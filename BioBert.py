@@ -223,8 +223,13 @@ def ray_hp_space(trial):
     return {
         "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.3),
-        "per_device_train_batch_size": tune.choice([4, 8, 16]),
+        #"per_device_train_batch_size": tune.choice([4, 8, 16]),
         "num_train_epochs": tune.choice([1, 2, 3, 4]),
+        "wandb": {
+            "project": "bionlp",
+            "reinit": True,
+            "allow_val_change": True
+        }
     }
 
 best_trial = trainer.hyperparameter_search(
@@ -235,7 +240,6 @@ best_trial = trainer.hyperparameter_search(
     keep_checkpoints_num=18,
     checkpoint_score_attr="training_iteration",
     local_dir="~/BioNLP/ray_results/",
-    name="bionlp",
     #compute_objective=compute_objective,
 )
 
