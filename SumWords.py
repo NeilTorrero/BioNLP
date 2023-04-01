@@ -4,16 +4,20 @@ from datasets import load_dataset, DatasetDict, Sequence, Value
 import evaluate
 from ast import literal_eval
 import torch
-
+import medialpy
 from transformers import AutoModelForTokenClassification, pipeline, AutoTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained("model/checkpoint-1560", local_files_only=True)
-model = AutoModelForTokenClassification.from_pretrained("model/checkpoint-1560", local_files_only=True)
+#from ray.train.huggingface import HuggingFaceCheckpoint
 
-finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy='average')
+#checkpoint = HuggingFaceCheckpoint(local_path="model")
+#tokenizer = checkpoint.get_tokenizer()
+#model = checkpoint.get_model()
+tokenizer = AutoTokenizer.from_pretrained("ray_results/_objective_2023-03-30_17-10-23/_objective_fe7d1_00000_0_learning_rate=0.0000,num_train_epochs=3,weight_decay=0.2852_2023-03-30_17-10-23/checkpoint_003000/checkpoint-3000", local_files_only=True)
+model = AutoModelForTokenClassification.from_pretrained("ray_results/_objective_2023-03-30_17-10-23/_objective_fe7d1_00000_0_learning_rate=0.0000,num_train_epochs=3,weight_decay=0.2852_2023-03-30_17-10-23/checkpoint_003000/checkpoint-3000", local_files_only=True)
 
-res = finetunedmodel("acute exacerbation a 59 year-old man presents with afib, malaise, heart attack and hypoxia")
-#print(res)
+finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy='max')
+
+print('Model loaded')
 
 mimic2 = load_dataset('csv', data_files="Preprocessing/NER/BioT2S.csv")
 mimic = load_dataset('csv', data_files="Preprocessing/BioNLP_PP_SAP.csv")
@@ -42,7 +46,7 @@ mimic = mimic.filter(lambda example: len(example["Text"]) > 0)
 print(mimic)
 
 rouge = evaluate.load("rouge")
-log = open("predictions.log", "w")
+log = open("ray_results/abbr/predictions0.log", "w")
 for ex in mimic['test']:
     predictions = []
     references = []
@@ -50,6 +54,12 @@ for ex in mimic['test']:
     res = finetunedmodel(ex['Text'])
     for match in res:
         words += match['word'] + '; '
+        if medialpy.exists(match['word'].upper()):
+            term = medialpy.find(match['word'].upper())
+            print(match['word'] + ': ')
+            print(term.meaning)
+            for m in term.meaning:
+                words += m + '; '
     labels = '; '.join(list(dict.fromkeys(ex['Labels'])))
     predictions.append(words)
     references.append(ex['Summary'])
@@ -62,3 +72,6 @@ for ex in mimic['test']:
 final_score = rouge.compute()
 
 print(final_score)
+log.write('\n')
+log.write('\n')
+log.write(str(final_score))

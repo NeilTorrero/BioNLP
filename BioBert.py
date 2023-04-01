@@ -201,7 +201,7 @@ class LossTrainer(Trainer):
         return (loss, outputs) if return_outputs else loss
 
 
-trainer = LossTrainer(
+trainer = Trainer(#LossTrainer(
     model=None,
     args=training_args,
     train_dataset=tokenized_dataset["train"],
