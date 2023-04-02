@@ -205,3 +205,4 @@ kaldi/
 *.csv
 NER_data/
 model/
+ray_results/
