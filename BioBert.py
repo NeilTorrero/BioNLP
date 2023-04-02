@@ -175,12 +175,12 @@ training_args = TrainingArguments(
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=2,
-    num_train_epochs=4,
+    num_train_epochs=1,
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
-    logging_steps=100,
-    eval_steps=100,
+    logging_steps=50,
+    eval_steps=50,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )
@@ -233,14 +233,13 @@ best_trial = trainer.hyperparameter_search(
     hp_space=ray_hp_space,
     n_trials=9,
     keep_checkpoints_num=1,
-    checkpoint_score_attr="training_iteration",
     local_dir="~/BioNLP/ray_results/",
     #compute_objective=compute_objective,
 )
 
 print(best_trial)
 
-logits, labels, _ = best_trial.predict(tokenized_dataset["test"])
+logits, labels, _ = trainer.predict(tokenized_dataset["test"])
 predictions = np.argmax(logits, axis=-1)
 
 # Remove ignored index (special tokens)
@@ -257,7 +256,7 @@ results = seqeval.compute(predictions=true_predictions, references=true_labels)
 print('All datasets test')
 print(results)
 
-logits, labels, _ = best_trial.predict(tokenized_mimic["test"])
+logits, labels, _ = trainer.predict(tokenized_mimic["test"])
 predictions = np.argmax(logits, axis=-1)
 
 # Remove ignored index (special tokens)
