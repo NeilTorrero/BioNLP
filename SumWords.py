@@ -49,20 +49,45 @@ for i in range(10):
         print('Model loaded')
 
         log = open("ray_results/abbr/predictions" + str(i) + ".log", "w")
+        log.write('Normal')
         for ex in mimic['test']:
             predictions = []
             references = []
             words = ""
             res = finetunedmodel(ex['Text'])
             for match in res:
-                words += match['word'] + '; '
+                words += match['word'] + ' ; '
+            labels = ' ; '.join(list(dict.fromkeys(ex['Labels'])))
+            predictions.append(words)
+            references.append(ex['Summary'])
+            log.write('Pred= ' + words + '\n')
+            log.write('Labels= ' + labels + '\n')
+            log.write('Sum=' + ex['Summary'] + '\n')
+            log.write('\n')
+            rouge.add_batch(predictions=predictions, references=references)
+
+        final_score = rouge.compute()
+
+        print(final_score)
+        log.write('\n\n')
+        log.write(str(final_score))
+
+        log.write('\n\n\n')
+        log.write('Abbrebiations')
+        for ex in mimic['test']:
+            predictions = []
+            references = []
+            words = ""
+            res = finetunedmodel(ex['Text'])
+            for match in res:
+                words += match['word'] + ' ; '
                 if medialpy.exists(match['word'].upper()):
                     term = medialpy.find(match['word'].upper())
                     print(match['word'] + ': ')
                     print(term.meaning)
                     for m in term.meaning:
-                        words += m + '; '
-            labels = '; '.join(list(dict.fromkeys(ex['Labels'])))
+                        words += m + ' ; '
+            labels = ' ; '.join(list(dict.fromkeys(ex['Labels'])))
             predictions.append(words)
             references.append(ex['Summary'])
             log.write('Pred= ' + words + '\n')
