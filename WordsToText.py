@@ -51,7 +51,7 @@ def compute_metrics(p):
         "rougeLsum": results["rougelsum"],
     }
 
-tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
+tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
 
 prefix = "summarize: "
 
@@ -71,16 +71,16 @@ tokenized_dataset = mimic.map(tokenize, batched=True)
 tokenized_dataset = tokenized_dataset.remove_columns(['words', 'summary'])
 print(tokenized_dataset)
 
-model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
+model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-small")
 
 data_collator = DataCollatorForSeq2Seq(tokenizer, model=model,label_pad_token_id=-100)
 
 training_args = Seq2SeqTrainingArguments(
     output_dir="model_w2t",
     learning_rate=2e-5,
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
-    gradient_accumulation_steps=2,
+    per_device_train_batch_size=1,
+    per_device_eval_batch_size=1,
+    gradient_accumulation_steps=1,
     num_train_epochs=5,
     weight_decay=0.01,
     evaluation_strategy="epoch",
