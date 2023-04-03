@@ -221,7 +221,7 @@ from ray import tune
 
 def ray_hp_space(trial):
     return {
-        "learning_rate": tune.uniform(5e-3, 5e-6),
+        "learning_rate": tune.uniform(5e-4, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.3),
         #"per_device_train_batch_size": tune.choice([4, 8, 16]),
         "num_train_epochs": tune.choice([1, 2, 3]),

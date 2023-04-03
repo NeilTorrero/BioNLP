@@ -34,7 +34,7 @@ print(mimic)
 rouge = evaluate.load("rouge")
 
 for i in range(10):
-    for file in glob.glob('ray_results/_objective_2023-04-02_10-58-00/_objective_78558_0000' + str(i) + '*/checkpoint_*/checkpoint-*'):
+    for file in glob.glob('ray_results/_objective_2023-04-02_15-13-02/_objective_18c6a_0000' + str(i) + '*/checkpoint_*/checkpoint-*'):
         print(file)
         #from ray.train.huggingface import HuggingFaceCheckpoint
 
