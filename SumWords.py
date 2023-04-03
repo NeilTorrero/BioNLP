@@ -31,10 +31,9 @@ mimic = mimic.filter(lambda example: len(example["Text"]) > 0)
 
 print(mimic)
 
-rouge = evaluate.load("rouge")
-
 for i in range(10):
     for file in glob.glob('ray_results/_objective_2023-04-02_15-13-02/_objective_18c6a_0000' + str(i) + '*/checkpoint_*/checkpoint-*'):
+        rouge = evaluate.load("rouge")
         print(file)
         #from ray.train.huggingface import HuggingFaceCheckpoint
 
@@ -44,7 +43,7 @@ for i in range(10):
         tokenizer = AutoTokenizer.from_pretrained(file, local_files_only=True)
         model = AutoModelForTokenClassification.from_pretrained(file, local_files_only=True)
 
-        finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy='max')
+        finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy='average')
 
         print('Model loaded')
 
@@ -71,7 +70,8 @@ for i in range(10):
         print(final_score)
         log.write('\n\n')
         log.write(str(final_score))
-
+        
+        rouge = evaluate.load("rouge")
         log.write('\n\n\n')
         log.write('Abbrebiations')
         for ex in mimic['test']:
@@ -85,8 +85,10 @@ for i in range(10):
                     term = medialpy.find(match['word'].upper())
                     print(match['word'] + ': ')
                     print(term.meaning)
-                    for m in term.meaning:
-                        words += m + ' ; '
+                    if len(term.meaning) == 1:
+                        words += term.meaning[0] + ' ; '
+                    #for m in term.meaning:
+                    #    words += m + ' ; '
             labels = ' ; '.join(list(dict.fromkeys(ex['Labels'])))
             predictions.append(words)
             references.append(ex['Summary'])
