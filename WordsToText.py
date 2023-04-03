@@ -1,5 +1,5 @@
 import transformers
-from transformers import T5Tokenizer, T5ForConditionalGeneration, TrainingArguments, Trainer
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, TrainingArguments, Trainer, Seq2SeqTrainer, Seq2SeqTrainingArguments, DataCollatorForSeq2Seq
 from datasets import load_dataset, DatasetDict, Sequence, Value
 import evaluate
 from ast import literal_eval
@@ -31,11 +31,9 @@ def fix_words(ex):
     return ex
 
 mimic = mimic.map(fix_words, batched=True)
-mimic = mimic.rename_column("words", "input_ids")
-mimic = mimic.rename_column("summary", "labels")
-mimic = mimic.cast_column('input_ids', Sequence(feature=Value(dtype='string', id=None), length=-1, id=None))
-mimic = mimic.cast_column('labels', Value(dtype='string', id=None))
-mimic = mimic.filter(lambda example: len(example["input_ids"]) > 0)
+mimic = mimic.cast_column('words', Sequence(feature=Value(dtype='string', id=None), length=-1, id=None))
+mimic = mimic.cast_column('summary', Value(dtype='string', id=None))
+mimic = mimic.filter(lambda example: len(example["words"]) > 0)
 
 print(mimic)
 
@@ -53,57 +51,31 @@ def compute_metrics(p):
         "rougeLsum": results["rougelsum"],
     }
 
-tokenizer = T5Tokenizer.from_pretrained("t5-base")
+tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
+
+prefix = "summarize: "
 
 def tokenize(ex):
-    for i, label in enumerate(ex["input_ids"]):
-        ex["input_ids"][i] = ' '.join(label)
+    for i, label in enumerate(ex["words"]):
+        ex["words"][i] = ' | '.join(label)
 
-    input_encodings = tokenizer.batch_encode_plus(ex["input_ids"], return_tensors="pt", padding='max_length', max_length=1024)
-    target_encodings = tokenizer.batch_encode_plus(ex['labels'], return_tensors="pt", padding='max_length', max_length=1024)
-    tokenized_ex = {
-        'input_ids': input_encodings['input_ids'], 
-        'attention_mask': input_encodings['attention_mask'],
-        'target_ids': target_encodings['input_ids'],
-        'target_attention_mask': target_encodings['attention_mask']
-    }
-    return tokenized_ex
+    inputs = [prefix + ex for ex in ex["words"]]
+    model_inputs = tokenizer(inputs, return_tensors="pt", padding='max_length', max_length=1024)
+    
+    labels = tokenizer(text_target=ex['summary'], return_tensors="pt", padding='max_length', max_length=1024)
+    
+    model_inputs["labels"] = labels['input_ids']
+    return model_inputs
 
 tokenized_dataset = mimic.map(tokenize, batched=True)
-columns = ['input_ids', 'target_ids', 'attention_mask', 'target_attention_mask']
-tokenized_dataset.set_format(type='torch', columns=columns)
+tokenized_dataset = tokenized_dataset.remove_columns(['words', 'summary'])
+print(tokenized_dataset)
 
-model = T5ForConditionalGeneration.from_pretrained("t5-base")
+model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
 
+data_collator = DataCollatorForSeq2Seq(tokenizer, model=model,label_pad_token_id=-100)
 
-from dataclasses import dataclass
-from typing import Dict, List, Optional
-
-from transformers import (
-    DataCollator,
-    Trainer,
-    TrainingArguments,
-)
-
-@dataclass
-class T2TDataCollator(DataCollator):
-    def collate_batch(self, batch: List) -> Dict[str, torch.Tensor]:
-        input_ids = torch.stack([example['input_ids'] for example in batch])
-        lm_labels = torch.stack([example['target_ids'] for example in batch])
-        lm_labels[lm_labels[:, :] == 0] = -100
-        attention_mask = torch.stack([example['attention_mask'] for example in batch])
-        decoder_attention_mask = torch.stack([example['target_attention_mask'] for example in batch])
-        
-        return {
-            'input_ids': input_ids, 
-            'attention_mask': attention_mask,
-            'lm_labels': lm_labels, 
-            'decoder_attention_mask': decoder_attention_mask
-        }
-
-data_collator = T2TDataCollator()
-
-training_args = TrainingArguments(
+training_args = Seq2SeqTrainingArguments(
     output_dir="model_w2t",
     learning_rate=2e-5,
     per_device_train_batch_size=4,
@@ -117,11 +89,11 @@ training_args = TrainingArguments(
     metric_for_best_model="loss"
 )
 
-trainer = Trainer(
+trainer = Seq2SeqTrainer(
     model=model,
     args=training_args,
-    train_dataset=mimic["train"],
-    eval_dataset=mimic["validation"],
+    train_dataset=tokenized_dataset["train"],
+    eval_dataset=tokenized_dataset["validation"],
     data_collator=data_collator,
     compute_metrics=compute_metrics
 )
