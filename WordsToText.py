@@ -4,16 +4,7 @@ from datasets import load_dataset, DatasetDict, Sequence, Value
 import evaluate
 from ast import literal_eval
 import torch
-
-#from transformers import AutoModelForTokenClassification, pipeline, AutoTokenizer
-
-#tokenizer = AutoTokenizer.from_pretrained("model/checkpoint-1560", local_files_only=True)
-#model = AutoModelForTokenClassification.from_pretrained("model/checkpoint-1560", local_files_only=True)
-
-#finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy='average')
-
-#res = finetunedmodel("acute exacerbation a 59 year-old man presents with afib, malaise, heart attack and hypoxia")
-#print(res)
+import numpy as np
 
 mimic = load_dataset('csv', data_files="Preprocessing/NER/BioT2S.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
@@ -42,13 +33,18 @@ rouge = evaluate.load("rouge")
 
 def compute_metrics(p):
     predictions, references = p
-    print(p)
-    results = rouge.compute(predictions=predictions, references=references)
+    decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+    references = np.where(references != -100, references, tokenizer.pad_token_id)
+    decoded_ref = tokenizer.batch_decode(references,  skip_special_tokens=True)
+    results = rouge.compute(predictions=decoded_preds, references=decoded_ref)
+
+    prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in predictions]
     return {
         "rouge1": results["rouge1"],
         "rouge2": results["rouge2"],
         "rougeL": results["rougeL"],
-        "rougeLsum": results["rougelsum"],
+        "rougeLsum": results["rougeLsum"],
+        "gen_len": np.mean(prediction_lens)
     }
 
 tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-small")
@@ -60,9 +56,9 @@ def tokenize(ex):
         ex["words"][i] = ' | '.join(label)
 
     inputs = [prefix + ex for ex in ex["words"]]
-    model_inputs = tokenizer(inputs, return_tensors="pt", padding='max_length', max_length=1024)
+    model_inputs = tokenizer(inputs, return_tensors="pt", padding='longest')
     
-    labels = tokenizer(text_target=ex['summary'], return_tensors="pt", padding='max_length', max_length=1024)
+    labels = tokenizer(text_target=ex['summary'], return_tensors="pt", padding='longest')
     
     model_inputs["labels"] = labels['input_ids']
     return model_inputs
@@ -83,8 +79,11 @@ training_args = Seq2SeqTrainingArguments(
     gradient_accumulation_steps=1,
     num_train_epochs=5,
     weight_decay=0.01,
-    evaluation_strategy="epoch",
-    save_strategy="epoch",
+    evaluation_strategy="steps",
+    save_strategy="steps",
+    logging_steps=50,
+    eval_steps=50,
+    predict_with_generate=True,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )
