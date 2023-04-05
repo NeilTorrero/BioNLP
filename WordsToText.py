@@ -51,9 +51,21 @@ tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
 
 prefix = "summarize: "
 
+import medialpy
+
 def tokenize(ex):
     for i, label in enumerate(ex["words"]):
-        ex["words"][i] = ' | '.join(label)
+        #ex["words"][i] = ' | '.join(label)
+        words = ""
+        for word in label:
+            words += word + ' | '
+            if medialpy.exists(word.upper()):
+                term = medialpy.find(word.upper())
+                #if len(term.meaning) == 1:
+                #    words += term.meaning[0] + ' | '
+                for m in term.meaning:
+                    words += m + ' | '
+        ex["words"][i] = words
 
     inputs = [prefix + ex for ex in ex["words"]]
     model_inputs = tokenizer(inputs, return_tensors="pt", padding='longest')
@@ -77,12 +89,12 @@ training_args = Seq2SeqTrainingArguments(
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=2,
-    num_train_epochs=5,
+    num_train_epochs=100,
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
-    logging_steps=50,
-    eval_steps=50,
+    logging_steps=100,
+    eval_steps=100,
     predict_with_generate=True,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
@@ -100,3 +112,12 @@ trainer = Seq2SeqTrainer(
 trainer.train()
 
 trainer.evaluate()
+
+predictions, references, _ = trainer.predict(tokenized_dataset["test"])
+
+decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+references = np.where(references != -100, references, tokenizer.pad_token_id)
+decoded_ref = tokenizer.batch_decode(references,  skip_special_tokens=True)
+results = rouge.compute(predictions=decoded_preds, references=decoded_ref)
+
+print(results)
