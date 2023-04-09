@@ -39,12 +39,17 @@ mimic = mimic.filter(lambda example: len(example["words"]) > 0)
 print(mimic)
 
 rouge = evaluate.load("rouge")
-
+import difflib
 for ex in mimic['train']:
     predictions = []
     references = []
-    predictions.append('; '.join(list(dict.fromkeys(ex['words']))))
-    # join similar words (words that contain others (ex: colon ca -- colon cancer))
+    wlist = list(dict.fromkeys(ex['words']))
+    for i, e in enumerate(wlist):
+        for j, ea in enumerate(wlist):
+            if i != j:
+                if (ea in e) and len(difflib.get_close_matches(ea, [e])) == 1:
+                    wlist.pop(j)
+    predictions.append('; '.join(wlist))
     references.append(ex['summary'])
     rouge.add_batch(predictions=predictions, references=references)
 
