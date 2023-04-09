@@ -6,7 +6,7 @@ from ast import literal_eval
 import torch
 import numpy as np
 
-mimic = load_dataset('csv', data_files="Preprocessing/NER/BioT2S.csv")
+mimic = load_dataset('csv', data_files="Preprocessing/NER/BioT2S2.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
 test_valid = mimic['test'].train_test_split(test_size=0.5)
 mimic = DatasetDict({
