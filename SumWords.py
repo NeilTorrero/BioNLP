@@ -35,11 +35,7 @@ for i in range(10):
     for file in glob.glob('ray_results/_objective_2023-04-02_15-13-02/_objective_18c6a_0000' + str(i) + '*/checkpoint_*/checkpoint-*'):
         rouge = evaluate.load("rouge")
         print(file)
-        #from ray.train.huggingface import HuggingFaceCheckpoint
-
-        #checkpoint = HuggingFaceCheckpoint(local_path="model")
-        #tokenizer = checkpoint.get_tokenizer()
-        #model = checkpoint.get_model()
+        
         tokenizer = AutoTokenizer.from_pretrained(file, local_files_only=True)
         model = AutoModelForTokenClassification.from_pretrained(file, local_files_only=True)
 

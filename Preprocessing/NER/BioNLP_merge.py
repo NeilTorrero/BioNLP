@@ -7,7 +7,7 @@ import re
 #   2- Put every column as diferent examples
 #   3- Option where we have the diferent columns as diferent examples and also the columns together
 #   4- The previous ones but excluding the Objective column
-df = pd.read_csv(r'Preprocessing/NER/BioNLP_NER_man.csv')
+df = pd.read_csv(r'Preprocessing/NER/BioNLP_NER_man_2_with_Ref.csv')
 tags = []
 tokens = []
 print('Separate sections in different examples?')
@@ -70,9 +70,9 @@ if separate == 0:
     df['tokens'] = tokens
     df['tags'] = tags
     if skip == 0:
-        df.to_csv(r'BioNLP_dataset.csv', index=False)
+        df.to_csv(r'BioNLP2_dataset.csv', index=False)
     else:
-        df.to_csv(r'BioNLP_dataset1.csv', index=False)
+        df.to_csv(r'BioNLP2_dataset1.csv', index=False)
 else:
     ndf = pd.DataFrame({'tokens': tokens, 'tags': tags})
-    ndf.to_csv(r'BioNLP_dataset' + str(separate) + str(skip) + '.csv', index=False)
+    ndf.to_csv(r'BioNLP2_dataset' + str(separate) + str(skip) + '.csv', index=False)

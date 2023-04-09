@@ -6,7 +6,9 @@ import pandas as pd
 filename = ''
 tags = [[],[],[]]
 tokens = [[],[],[]]
+refs = [[],[],[]]
 idx = 0
+reference = 1
 # Color for B-I-O (1-2-0) Label following BC5CDR dataset Tag dictionary (reworked for only disease)
 colors = {0: 'grey', 1: 'red', 2:'green'}
 
@@ -19,13 +21,25 @@ def make_next_window():
     text_s = [[sg.Button(str(word), pad=(0,0), button_color=colors[tags[1][idx][i]], border_width=0, key=(idx,1,i)) for i, word in enumerate(tokens[1][idx])]]
     text_o = [[sg.Button(str(word), pad=(0,0), button_color=colors[tags[2][idx][i]], border_width=0, key=(idx,2,i)) for i, word in enumerate(tokens[2][idx])]]
 
-    layout = [[sg.Text('Index: ' + str(idx) + '/' + str(len(df.index)), key='_INDEX_')],
-            [sg.Column([[sg.Frame('Assessment', text_a, pad=10, key='_TEXT_A_')],
-                        [sg.Frame('Subjective', text_s, pad=10, key='_TEXT_S_')],
-                        [sg.Frame('Objective', text_o, pad=10, key='_TEXT_O_')]],
-                    key='_TEXT_',scrollable=True, expand_y=True)],
-            [sg.Text('Summary: ' + df.loc[idx]['Summary'])],
-            [sg.Button('Previous'), sg.Button('Next'), sg.Button('Save') ,sg.Exit()]]
+    if reference == 1:
+        layout = [[sg.Text('Index: ' + str(idx) + '/' + str(len(df.index)), key='_INDEX_')],
+                [sg.Column([[sg.Text(refs[0][idx])],
+                            [sg.Frame('Assessment', text_a, pad=10, key='_TEXT_A_')],
+                            [sg.Text(refs[1][idx])],
+                            [sg.Frame('Subjective', text_s, pad=10, key='_TEXT_S_')],
+                            [sg.Text(refs[2][idx])],
+                            [sg.Frame('Objective', text_o, pad=10, key='_TEXT_O_')]],
+                        key='_TEXT_',scrollable=True, expand_y=True)],
+                [sg.Column([[sg.Text('Summary: ' + df.loc[idx]['Summary'])]],key='_TEXT_',scrollable=True)],
+                [sg.Button('Previous'), sg.Button('Next'), sg.Button('Save') ,sg.Exit()]]
+    else:
+        layout = [[sg.Text('Index: ' + str(idx) + '/' + str(len(df.index)), key='_INDEX_')],
+                [sg.Column([[sg.Frame('Assessment', text_a, pad=10, key='_TEXT_A_')],
+                            [sg.Frame('Subjective', text_s, pad=10, key='_TEXT_S_')],
+                            [sg.Frame('Objective', text_o, pad=10, key='_TEXT_O_')]],
+                        key='_TEXT_',scrollable=True, expand_y=True)],
+                [sg.Column([[sg.Text('Summary: ' + df.loc[idx]['Summary'])]],key='_TEXT_',scrollable=True)],
+                [sg.Button('Previous'), sg.Button('Next'), sg.Button('Save') ,sg.Exit()]]
     return sg.Window('Example ' + str(idx), layout, size=(1600,600), finalize=True, resizable=True)
 
 
@@ -77,6 +91,9 @@ while True:
             tokens[0].append(literal_eval(df.loc[i]['tokens_ap']))
             tokens[1].append(literal_eval(df.loc[i]['tokens_s']))
             tokens[2].append(literal_eval(df.loc[i]['tokens_o']))
+            refs[0].append(df.loc[i]['Assessment'])
+            refs[1].append(df.loc[i]['Subjective Sections'])
+            refs[2].append(df.loc[i]['Objective Sections'])
         # Changing window
         window.hide()
         idx = int(values['_IN_'])
