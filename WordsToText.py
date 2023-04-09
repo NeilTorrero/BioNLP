@@ -55,17 +55,17 @@ import medialpy
 
 def tokenize(ex):
     for i, label in enumerate(ex["words"]):
-        #ex["words"][i] = ' | '.join(label)
-        words = ""
-        for word in label:
-            words += word + ' | '
-            if medialpy.exists(word.upper()):
-                term = medialpy.find(word.upper())
-                #if len(term.meaning) == 1:
-                #    words += term.meaning[0] + ' | '
-                for m in term.meaning:
-                    words += m + ' | '
-        ex["words"][i] = words
+        ex["words"][i] = ' | '.join(label)
+        #words = ""
+        #for word in label:
+        #    words += word + ' | '
+        #    if medialpy.exists(word.upper()):
+        #        term = medialpy.find(word.upper())
+        #        #if len(term.meaning) == 1:
+        #        #    words += term.meaning[0] + ' | '
+        #        for m in term.meaning:
+        #            words += m + ' | '
+        #ex["words"][i] = words
 
     inputs = [prefix + ex for ex in ex["words"]]
     model_inputs = tokenizer(inputs, return_tensors="pt", padding='longest')
@@ -88,7 +88,7 @@ training_args = Seq2SeqTrainingArguments(
     learning_rate=2e-5,
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
-    gradient_accumulation_steps=2,
+    gradient_accumulation_steps=4,
     num_train_epochs=100,
     weight_decay=0.01,
     evaluation_strategy="steps",

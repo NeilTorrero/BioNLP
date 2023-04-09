@@ -11,7 +11,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
-mimic = load_dataset('csv', data_files="BioNLP2_dataset1.csv")
+mimic = load_dataset('csv', data_files="BioNLP_dataset.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
 print(mimic)
 test_valid = mimic['test'].train_test_split(test_size=0.5)
@@ -160,6 +160,14 @@ label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 #model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
 #model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
 model = AutoModelForTokenClassification.from_pretrained("bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+def model_init(trial):
+    return AutoModelForTokenClassification.from_pretrained(
+        "bert-base-uncased", 
+        num_labels=3, 
+        id2label=id2label, 
+        label2id=label2id, 
+        ignore_mismatched_sizes=True
+    )
 
 training_args = TrainingArguments(
     output_dir="model",
@@ -194,19 +202,37 @@ class LossTrainer(Trainer):
 
 
 trainer = Trainer(#LossTrainer(
-    model=model,
+    model=None,
     args=training_args,
     train_dataset=tokenized_dataset["train"],
     eval_dataset=tokenized_dataset["validation"],
     tokenizer=tokenizer,
+    model_init=model_init,
     data_collator=data_collator,
     compute_metrics=compute_metrics
 )
 
-trainer.train()
-trainer.save_model('model/end/')
+from ray import tune
 
-trainer.evaluate()
+def ray_hp_space(trial):
+    return {
+        "learning_rate": tune.uniform(5e-4, 5e-5),
+        "weight_decay": tune.uniform(0.0, 0.3),
+        #"per_device_train_batch_size": tune.choice([4, 8, 16]),
+        "num_train_epochs": tune.choice([1, 2, 3]),
+    }
+
+best_trial = trainer.hyperparameter_search(
+    direction="maximize",
+    backend="ray",
+    hp_space=ray_hp_space,
+    n_trials=9,
+    keep_checkpoints_num=1,
+    local_dir="~/BioNLP/ray_results/",
+    #compute_objective=compute_objective,
+)
+
+print(best_trial)
 
 logits, labels, _ = trainer.predict(tokenized_dataset["test"])
 predictions = np.argmax(logits, axis=-1)
