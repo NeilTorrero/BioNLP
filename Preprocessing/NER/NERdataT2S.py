@@ -8,8 +8,8 @@ words = []
 
 df = pd.read_csv('Preprocessing/NER/BioNLP_NER_man_2_with_Ref.csv')
 for i in range(len(df.index)):
-    tags.append(literal_eval(df.loc[i]['tags_ap']) + literal_eval(df.loc[i]['tags_s']) + literal_eval(df.loc[i]['tags_o']))
-    tokens.append(literal_eval(df.loc[i]['tokens_ap']) + literal_eval(df.loc[i]['tokens_s']) + literal_eval(df.loc[i]['tokens_o']))
+    tags.append(literal_eval(df.loc[i]['tags_ap']) + literal_eval(df.loc[i]['tags_s']))# + literal_eval(df.loc[i]['tags_o']))
+    tokens.append(literal_eval(df.loc[i]['tokens_ap']) + literal_eval(df.loc[i]['tokens_s']))# + literal_eval(df.loc[i]['tokens_o']))
     summaries.append(df.loc[i]['Summary'])
 
 for i, tag in enumerate(tags):

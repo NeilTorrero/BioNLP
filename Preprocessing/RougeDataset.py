@@ -16,13 +16,6 @@ import torch
 #print(res)
 
 mimic = load_dataset('csv', data_files="Preprocessing/NER/BioT2S2.csv")
-mimic = mimic['train'].train_test_split(test_size=0.2)
-test_valid = mimic['test'].train_test_split(test_size=0.5)
-mimic = DatasetDict({
-    'train': mimic['train'],
-    'test': test_valid['test'],
-    'validation': test_valid['train']
-})
 
 
 def fix_words(ex):
@@ -40,19 +33,36 @@ print(mimic)
 
 rouge = evaluate.load("rouge")
 import difflib
-for ex in mimic['train']:
+import re
+
+log = open("Preprocessing/dataset_rouge.log", "w")
+for idx, ex in enumerate(mimic['train']):
     predictions = []
     references = []
+    rouge2 = evaluate.load("rouge")
     wlist = list(dict.fromkeys(ex['words']))
     for i, e in enumerate(wlist):
+        # fix spaces on special characters (s / p)
+        wlist[i] = wlist[i].replace(" / ", "/")
+        wlist[i] = wlist[i].replace(" - ", "-")
+        wlist[i] = wlist[i].replace(" .", ".")
         for j, ea in enumerate(wlist):
             if i != j:
                 if (ea in e) and len(difflib.get_close_matches(ea, [e])) == 1:
                     wlist.pop(j)
-    predictions.append('; '.join(wlist))
+    # things like "pea arrest" and "pea" are not merged
+    pred = '; '.join(wlist)
+    log.write('\n' + str(idx) + '\n')
+    log.write('Prediction:\n\t' + pred + '\n')
+    log.write('Summary:\n\t' + ex['summary'] + '\n')
+    log.write(str(rouge2.compute(predictions=[pred], references=[ex['summary']])))
+    log.write('\n')
+    predictions.append(pred)
     references.append(ex['summary'])
     rouge.add_batch(predictions=predictions, references=references)
 
 final_score = rouge.compute()
 
+log.write('\n\nFinal score\n')
+log.write(str(final_score))
 print(final_score)
