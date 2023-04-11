@@ -167,7 +167,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=2,
-    num_train_epochs=1,
+    num_train_epochs=2,
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
@@ -225,6 +225,24 @@ results = seqeval.compute(predictions=true_predictions, references=true_labels)
 print('All datasets test')
 print(results)
 
+tokenizer = AutoTokenizer.from_pretrained('model/end/', local_files_only=True)
+model = AutoModelForTokenClassification.from_pretrained('model/end/', local_files_only=True)
+
+training_args = TrainingArguments(
+    output_dir="model",
+    learning_rate=5e-5,
+    per_device_train_batch_size=4,
+    per_device_eval_batch_size=4,
+    gradient_accumulation_steps=2,
+    num_train_epochs=10,
+    weight_decay=0.01,
+    evaluation_strategy="steps",
+    save_strategy="steps",
+    logging_steps=50,
+    eval_steps=50,
+    load_best_model_at_end=True,
+    metric_for_best_model="loss"
+)
 
 trainer = Trainer(#LossTrainer(
     model=model,
