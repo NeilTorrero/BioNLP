@@ -76,9 +76,9 @@ mimic = mimic.filter(lambda example: len(example["tags"]) > 0)
 
 # Merge
 datasets = DatasetDict()
-datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi['train'],mimic['train']])
-datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi['validation'],mimic['validation']])
-datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi['test'],mimic['test']])
+datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi['train']])#,mimic['train']])
+datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi['validation']])#,mimic['validation']])
+datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi['test']])#,mimic['test']])
 print(datasets)
 
 from sklearn.utils import class_weight
@@ -224,6 +224,22 @@ true_labels = [
 results = seqeval.compute(predictions=true_predictions, references=true_labels)
 print('All datasets test')
 print(results)
+
+
+trainer = Trainer(#LossTrainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_mimic["train"],
+    eval_dataset=tokenized_mimic["validation"],
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+    compute_metrics=compute_metrics
+)
+
+trainer.train()
+trainer.save_model('model/end/')
+
+trainer.evaluate()
 
 logits, labels, _ = trainer.predict(tokenized_mimic["test"])
 predictions = np.argmax(logits, axis=-1)
