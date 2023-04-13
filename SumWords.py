@@ -1,3 +1,6 @@
+#
+# Evaluating with rouge results of concatenating the NER predictions from finetuned NER model
+#
 import transformers, torch, evaluate
 from transformers import T5Tokenizer, T5ForConditionalGeneration, TrainingArguments, Trainer, AutoModelForTokenClassification, pipeline, AutoTokenizer
 from datasets import load_dataset, DatasetDict, Sequence, Value
@@ -5,8 +8,8 @@ from ast import literal_eval
 import medialpy, os, glob
 
 
-mimic2 = load_dataset('csv', data_files="Preprocessing/NER/BioT2S.csv")
-mimic = load_dataset('csv', data_files="Preprocessing/BioNLP_PP_SAP.csv")
+mimic2 = load_dataset('csv', data_files="Preprocessing/NER/Resources/BioT2S.csv")
+mimic = load_dataset('csv', data_files="Preprocessing/Resources/BioNLP_PP_SAP.csv")
 mimic['train'] = mimic['train'].add_column('Labels', mimic2['train']['words'])
 mimic = mimic['train'].train_test_split(test_size=0.2)
 test_valid = mimic['test'].train_test_split(test_size=0.5)

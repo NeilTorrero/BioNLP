@@ -1,3 +1,6 @@
+#
+# Script to analyse abbreviations in the data
+#
 import pandas as pd
 import nltk
 from nltk.tokenize import word_tokenize
@@ -8,7 +11,7 @@ import medialpy
 #pairs = replace_acronyms('h/o hyperglycemia chronic obstructive pulmonary disease (copd, bronchitis, emphysema) with acute exacerbation a 59 year-old man presents with malaise and hypoxia')
 #print(pairs)
 
-df = pd.read_csv(r'BioNLP2023-1A-Train.csv')
+df = pd.read_csv(r'Resources/BioNLP2023-1A-Train.csv')
 #remove rows with empty GT
 df = df.dropna(subset=['Summary']).reset_index(drop=True)
 
@@ -56,4 +59,4 @@ print(i_a_2)
 print(i_s)
 print(i_s_2)
 
-#df.to_csv(r'BioNLP_Abbr.csv', index=False)
+#df.to_csv(r'Resources/BioNLP_Abbr.csv', index=False)

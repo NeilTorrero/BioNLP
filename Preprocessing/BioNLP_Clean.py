@@ -1,7 +1,10 @@
+#
+# Original dataset clean up preprocessing
+#
 import pandas as pd
 import re
 
-df = pd.read_csv(r'BioNLP2023-1A-Train.csv')
+df = pd.read_csv(r'Resources/BioNLP2023-1A-Train.csv')
 #remove rows with empty GT
 df = df.dropna(subset=['Summary']).reset_index(drop=True)
 #sustituir por los tags (nombres por Pacient (por ejemplo))
@@ -48,7 +51,7 @@ df = df.replace('\n',' ', regex=True)
 #remove multiple spaces
 df[['Assessment','Subjective Sections','Objective Sections']] = df[['Assessment','Subjective Sections','Objective Sections']].replace(to_replace=' +', value=' ', regex=True)
 
-df.to_csv(r'BioNLP_PP.csv', index=False)
+df.to_csv(r'Resources/BioNLP_PP.csv', index=False)
 print(df.dtypes)
 print('What columns of SOAP to include:\n' + 
         '\t1 - AP\n' +
@@ -60,15 +63,15 @@ option = int(option)
 if option == 1:
     df['Text'] = df['Assessment']
     df = df.drop(columns=['File ID', 'Assessment','Subjective Sections','Objective Sections'])
-    df.to_csv(r'BioNLP_PP_AP.csv', index=False)
+    df.to_csv(r'Resources/BioNLP_PP_AP.csv', index=False)
 elif option == 2:
     df['Text'] =  df['Subjective Sections'].astype(str) + ' ' + df['Assessment'].astype(str)
     df = df.drop(columns=['File ID', 'Assessment','Subjective Sections','Objective Sections'])
-    df.to_csv(r'BioNLP_PP_SAP.csv', index=False)
+    df.to_csv(r'Resources/BioNLP_PP_SAP.csv', index=False)
 elif option == 3:
     df['Text'] = df['Subjective Sections'].astype(str) + ' ' + df['Objective Sections'].astype(str) + ' ' + df['Assessment'].astype(str)
     df = df.drop(columns=['File ID', 'Assessment','Subjective Sections','Objective Sections'])
-    df.to_csv(r'BioNLP_PP_SOAP.csv', index=False)    
+    df.to_csv(r'Resources/BioNLP_PP_SOAP.csv', index=False)    
 else:
     print(option)    
 

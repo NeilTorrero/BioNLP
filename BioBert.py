@@ -1,3 +1,7 @@
+#
+# Finetune BERT for NER in medical data
+#
+
 import transformers
 from transformers import AutoTokenizer, AutoModel, AutoModelForTokenClassification, TrainingArguments, Trainer
 import evaluate
@@ -11,15 +15,15 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
-mimic = load_dataset('csv', data_files="BioNLP2_dataset1.csv")
+mimic = load_dataset('csv', data_files="Resources/BioNLP2_dataset1.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
-print(mimic)
 test_valid = mimic['test'].train_test_split(test_size=0.5)
 mimic = DatasetDict({
     'train': mimic['train'],
     'test': test_valid['test'],
     'validation': test_valid['train']
 })
+print(mimic)
 
 # Adapt BC5CDR
 #Rework chemical tags bc5cdr
@@ -167,7 +171,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=2,
-    num_train_epochs=2,
+    num_train_epochs=1,
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
@@ -234,7 +238,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=2,
-    num_train_epochs=10,
+    num_train_epochs=2,
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",

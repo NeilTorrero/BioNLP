@@ -1,3 +1,6 @@
+#
+# Finetune BERT with a CRF head for NER in medical data
+#
 import transformers
 from transformers import AutoTokenizer, AutoModel, AutoConfig, AutoModelForTokenClassification, TrainingArguments, Trainer
 import evaluate
@@ -7,7 +10,7 @@ from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dat
 
 bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
-mimic = load_dataset('csv', data_files="BioNLP_dataset.csv")
+mimic = load_dataset('csv', data_files="Resources/BioNLP_dataset.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
 print(mimic)
 test_valid = mimic['test'].train_test_split(test_size=0.5)

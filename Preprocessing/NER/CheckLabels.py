@@ -1,8 +1,11 @@
+#
+# Script for manual review of NER labeling
+#
 from ast import literal_eval
 import pandas as pd
 
 check = []
-df = pd.read_csv(r'BioNLP_NER.csv')
+df = pd.read_csv(r'Resources/BioNLP_NER.csv')
 jump = 0
 for idx in range(len(df.index)):
     if jump == 0:
@@ -43,7 +46,7 @@ for idx in range(len(df.index)):
     if a != '':
         check.append(str(idx) + ' - O' + ' # ' + a)
 
-    with open('checklist.txt','w') as file:
+    with open('Resources/checklist.txt','w') as file:
 	    file.write('\n'.join(check))
 
 print(check)

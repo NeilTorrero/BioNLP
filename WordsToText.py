@@ -1,3 +1,6 @@
+#
+# Finetune T5 for converting the NER keywords to summary text
+#
 import transformers
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, TrainingArguments, Trainer, Seq2SeqTrainer, Seq2SeqTrainingArguments, DataCollatorForSeq2Seq
 from datasets import load_dataset, DatasetDict, Sequence, Value
@@ -6,7 +9,7 @@ from ast import literal_eval
 import torch
 import numpy as np
 
-mimic = load_dataset('csv', data_files="Preprocessing/NER/BioT2S2.csv")
+mimic = load_dataset('csv', data_files="Preprocessing/NER/Resources/BioT2S2.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
 test_valid = mimic['test'].train_test_split(test_size=0.5)
 mimic = DatasetDict({

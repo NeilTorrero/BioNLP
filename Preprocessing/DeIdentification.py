@@ -1,7 +1,10 @@
+#
+# Script analysing and testing of the data deidentification for cleaning original data
+#
 import pandas as pd
 import re
 
-df = pd.read_csv(r'BioNLP2023-1A-Train.csv')
+df = pd.read_csv(r'Resources/BioNLP2023-1A-Train.csv')
 occurences = set()
 new_occ = set()
 #sustituir por los tags (nombres por Pacient (por ejemplo))

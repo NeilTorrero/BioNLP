@@ -1,3 +1,6 @@
+#
+# UI Script to review and modify NER labeling
+#
 import PySimpleGUI as sg
 from ast import literal_eval
 import pandas as pd

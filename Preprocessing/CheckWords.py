@@ -1,10 +1,13 @@
+#
+# Script to analyse the percentage of words that match in text and summary
+#
 import pandas as pd
 import re
 import nltk
 from nltk.corpus import stopwords
 nltk.download('stopwords')
 stop_words = set(stopwords.words('english'))
-df = pd.read_csv(r'BioNLP2023-1A-Train.csv')
+df = pd.read_csv(r'Resources/BioNLP2023-1A-Train.csv')
 #remove rows with empty GT
 df = df.dropna(subset=['Summary']).reset_index(drop=True)
 

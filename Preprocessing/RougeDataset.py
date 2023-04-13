@@ -1,3 +1,6 @@
+#
+# Evaluating dataset for Word to Summary to Rouge
+#
 import transformers
 from transformers import T5Tokenizer, T5ForConditionalGeneration, TrainingArguments, Trainer
 from datasets import load_dataset, DatasetDict, Sequence, Value
@@ -15,7 +18,7 @@ import torch
 #res = finetunedmodel("acute exacerbation a 59 year-old man presents with afib, malaise, heart attack and hypoxia")
 #print(res)
 
-mimic = load_dataset('csv', data_files="Preprocessing/NER/BioT2S2.csv")
+mimic = load_dataset('csv', data_files="Resources/Preprocessing/NER/BioT2S2.csv")
 
 
 def fix_words(ex):
@@ -35,7 +38,7 @@ rouge = evaluate.load("rouge")
 import difflib
 import re
 
-log = open("Preprocessing/dataset_rouge.log", "w")
+log = open("Preprocessing/Resources/dataset_rouge.log", "w")
 for idx, ex in enumerate(mimic['train']):
     predictions = []
     references = []
