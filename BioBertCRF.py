@@ -10,7 +10,7 @@ from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dat
 
 bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
-mimic = load_dataset('csv', data_files="Resources/BioNLP_dataset.csv")
+mimic = load_dataset('csv', data_files="Resources/BioNLP2_dataset1.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
 print(mimic)
 test_valid = mimic['test'].train_test_split(test_size=0.5)
@@ -115,7 +115,7 @@ class BertCRF(nn.Module):
         super(BertCRF, self).__init__()
         self.num_labels = num_labels
 
-        self.bert = AutoModelForTokenClassification.from_pretrained(checkpoint, ignore_mismatched_sizes=True, config=AutoConfig.from_pretrained(checkpoint, num_labels=num_labels, id2label=id2label, label2id=label2id, output_attentions=True, output_hidden_states=True))
+        self.bert = AutoModelForTokenClassification.from_pretrained(checkpoint, local_files_only=True, ignore_mismatched_sizes=True, config=AutoConfig.from_pretrained(checkpoint, local_files_only=True, num_labels=num_labels, id2label=id2label, label2id=label2id, output_attentions=True, output_hidden_states=True))
         self.dropout = nn.Dropout(0.1)
         self.crf = CRF(num_tags=num_labels, batch_first = True)
     
@@ -160,7 +160,7 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
 label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
-model = BertCRF(checkpoint="bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id)
+model = BertCRF(checkpoint="model/end/", num_labels=3, id2label=id2label, label2id=label2id)
 
 training_args = TrainingArguments(
     output_dir="modelcrf",
@@ -172,8 +172,8 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
-    logging_steps=100,
-    eval_steps=100,
+    logging_steps=50,
+    eval_steps=50,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )

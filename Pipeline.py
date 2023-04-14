@@ -7,9 +7,11 @@ from datasets import load_dataset, Value
 import pandas as pd
 import numpy as np
 
-df = pd.read_csv(r'Resources/BioNLP2023-1A-Train.csv')
+test = 1
+df = pd.read_csv(r'Resources/BioNLP2023-1A-Test.csv')
 #remove rows with empty GT
-df = df.dropna(subset=['Summary']).reset_index(drop=True)
+if test == 0:
+    df = df.dropna(subset=['Summary']).reset_index(drop=True)
 #sustituir por los tags (nombres por Pacient (por ejemplo))
 def cleanDeIdentification(x):
     f = re.search(r'\[\*\*(.*?)\*\*\]', str(x))
@@ -52,8 +54,9 @@ df.to_csv(r'Resources/Dataset_Test.csv', index=False)
 
 mimic = load_dataset('csv', data_files="Resources/Dataset_Test.csv")
 mimic = mimic.cast_column('Text', Value(dtype='string', id=None))
-mimic = mimic.cast_column('Summary', Value(dtype='string', id=None))
-mimic = mimic.filter(lambda example: len(example["Text"]) > 0)
+if test == 0:
+    mimic = mimic.cast_column('Summary', Value(dtype='string', id=None))
+    mimic = mimic.filter(lambda example: len(example["Text"]) > 0)
 
 
 
@@ -93,22 +96,23 @@ for ex in mimic['train']:
         words += match['word'] + '; '
     predictions.append(words)
     file.write(words + '\n')
-    references.append(ex['Summary'])
-    rouge.add_batch(predictions=predictions, references=references)
+    if test == 0:
+        references.append(ex['Summary'])
+        rouge.add_batch(predictions=predictions, references=references)
+        
+        precision, recall, f1 = compute_rouge(ex['Summary'], words)
+        precs.append(precision)
+        recs.append(recall)
+        f1s.append(f1)
     
-    precision, recall, f1 = compute_rouge(ex['Summary'], words)
-    precs.append(precision)
-    recs.append(recall)
-    f1s.append(f1)
-    
+if test == 0:
+    metrics["precision"] = np.mean(precs)
+    metrics["recall"] = np.mean(recs)
+    metrics["f1"] = np.mean(f1s)
 
-metrics["precision"] = np.mean(precs)
-metrics["recall"] = np.mean(recs)
-metrics["f1"] = np.mean(f1s)
+    print(metrics)
 
-print(metrics)
+    final_score = rouge.compute()
 
-final_score = rouge.compute()
-
-print(final_score)
+    print(final_score)
 os.remove(r'Resources/Dataset_Test.csv')

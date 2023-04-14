@@ -87,8 +87,8 @@ print(datasets)
 
 from sklearn.utils import class_weight
 
-class_weights=class_weight.compute_class_weight(class_weight='balanced',classes=np.unique(np.concatenate(datasets['train']['tags'])),y=np.concatenate(datasets['train']['tags']))
-class_weights=torch.tensor(class_weights,dtype=torch.float)
+class_weights=class_weight.compute_class_weight(class_weight='balanced',classes=np.unique(np.concatenate(mimic['train']['tags'])),y=np.concatenate(mimic['train']['tags']))
+class_weights=torch.tensor(class_weights, dtype=torch.float)
 
 print('Class weights:')
 print(class_weights)
@@ -160,75 +160,6 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
 label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
-#model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
-#model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
-#model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
-model = AutoModelForTokenClassification.from_pretrained("bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
-
-training_args = TrainingArguments(
-    output_dir="model",
-    learning_rate=5e-5,
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
-    gradient_accumulation_steps=2,
-    num_train_epochs=1,
-    weight_decay=0.01,
-    evaluation_strategy="steps",
-    save_strategy="steps",
-    logging_steps=50,
-    eval_steps=50,
-    load_best_model_at_end=True,
-    metric_for_best_model="loss"
-)
-
-
-class LossTrainer(Trainer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def compute_loss(self, model, inputs, return_outputs=False):
-        labels = inputs.get("labels")
-        # forward pass
-        outputs = model(**inputs)
-        logits = outputs.get("logits")
-        # compute custom loss (suppose one has 3 labels with different weights)
-        loss_fct = nn.CrossEntropyLoss(weight=class_weights.to(device))
-        loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-        return (loss, outputs) if return_outputs else loss
-
-
-trainer = Trainer(#LossTrainer(
-    model=model,
-    args=training_args,
-    train_dataset=tokenized_dataset["train"],
-    eval_dataset=tokenized_dataset["validation"],
-    tokenizer=tokenizer,
-    data_collator=data_collator,
-    compute_metrics=compute_metrics
-)
-
-trainer.train()
-trainer.save_model('model/ner/')
-
-trainer.evaluate()
-
-logits, labels, _ = trainer.predict(tokenized_dataset["test"])
-predictions = np.argmax(logits, axis=-1)
-
-# Remove ignored index (special tokens)
-true_predictions = [
-    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]#(l != -100 and l != 0)]
-    for prediction, label in zip(predictions, labels)
-]
-true_labels = [
-    [labels_bio[l] for l in label if l != -100]#(l != -100 and l != 0)]
-    for label in labels
-]
-
-results = seqeval.compute(predictions=true_predictions, references=true_labels)
-print('All datasets test')
-print(results)
-
 tokenizer = AutoTokenizer.from_pretrained('model/ner/', local_files_only=True)
 model = AutoModelForTokenClassification.from_pretrained('model/ner/', local_files_only=True)
 
@@ -248,7 +179,21 @@ training_args = TrainingArguments(
     metric_for_best_model="loss"
 )
 
-trainer = Trainer(#LossTrainer(
+class LossTrainer(Trainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.get("labels")
+        # forward pass
+        outputs = model(**inputs)
+        logits = outputs.get("logits")
+        # compute custom loss (suppose one has 3 labels with different weights)
+        loss_fct = nn.CrossEntropyLoss(weight=class_weights.to(device))
+        loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        return (loss, outputs) if return_outputs else loss
+
+trainer = LossTrainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_mimic["train"],
@@ -259,7 +204,6 @@ trainer = Trainer(#LossTrainer(
 )
 
 trainer.train()
-trainer.save_model('model/end/')
 
 trainer.evaluate()
 
