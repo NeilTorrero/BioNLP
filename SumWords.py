@@ -6,6 +6,20 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration, TrainingArgume
 from datasets import load_dataset, DatasetDict, Sequence, Value
 from ast import literal_eval
 import medialpy, os, glob
+from rouge_score import rouge_scorer
+import numpy as np
+
+
+def applyPyRouge(gts, preds):
+    scorer = rouge_scorer.RougeScorer(['rouge1','rouge2','rougeL'])
+    scores = scorer.score(gts, preds) 
+    return scores 
+
+    
+def compute_rouge(gt, pred):
+    sc = applyPyRouge(gt, pred)
+    return sc['rougeL'].precision, sc['rougeL'].recall, sc['rougeL'].fmeasure
+
 
 
 mimic2 = load_dataset('csv', data_files="Preprocessing/NER/Resources/BioT2S.csv")
@@ -36,6 +50,8 @@ print(mimic)
 
 for i in range(10):
     for file in glob.glob('ray_results/_objective_2023-04-02_15-13-02/_objective_18c6a_0000' + str(i) + '*/checkpoint_*/checkpoint-*'):
+        metrics = {}
+        precs, recs, f1s = [], [], [] 
         rouge = evaluate.load("rouge")
         print(file)
         
@@ -64,6 +80,19 @@ for i in range(10):
             log.write('\n')
             rouge.add_batch(predictions=predictions, references=references)
 
+            precision, recall, f1 = compute_rouge(ex['Summary'], words)
+            precs.append(precision)
+            recs.append(recall)
+            f1s.append(f1)
+
+
+        metrics["precision"] = np.mean(precs)
+        metrics["recall"] = np.mean(recs)
+        metrics["f1"] = np.mean(f1s)
+
+        print(metrics)
+        log.write(metrics)
+        log.write('\n')
         final_score = rouge.compute()
 
         print(final_score)
@@ -96,6 +125,19 @@ for i in range(10):
             log.write('Sum=' + ex['Summary'] + '\n')
             log.write('\n')
             rouge.add_batch(predictions=predictions, references=references)
+            precision, recall, f1 = compute_rouge(ex['Summary'], words)
+            precs.append(precision)
+            recs.append(recall)
+            f1s.append(f1)
+
+
+        metrics["precision"] = np.mean(precs)
+        metrics["recall"] = np.mean(recs)
+        metrics["f1"] = np.mean(f1s)
+
+        print(metrics)
+        log.write(metrics)
+        log.write('\n')
 
         final_score = rouge.compute()
 

@@ -8,6 +8,7 @@ import evaluate
 from ast import literal_eval
 import torch
 import numpy as np
+from rouge_score import rouge_scorer
 
 mimic = load_dataset('csv', data_files="Preprocessing/NER/Resources/BioT2S2.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2)
@@ -42,7 +43,14 @@ def compute_metrics(p):
     results = rouge.compute(predictions=decoded_preds, references=decoded_ref)
 
     prediction_lens = [np.count_nonzero(pred != tokenizer.pad_token_id) for pred in predictions]
+   
+    scorer = rouge_scorer.RougeScorer(['rouge1','rouge2','rougeL'])
+    sc = scorer.score(decoded_ref, decoded_preds)
+    
     return {
+        "precision": sc['rougeL'].precision,
+        "recall": sc['rougeL'].recall,
+        "f1": sc['rougeL'].fmeasure,
         "rouge1": results["rouge1"],
         "rouge2": results["rouge2"],
         "rougeL": results["rougeL"],

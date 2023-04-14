@@ -5,6 +5,7 @@ import transformers, evaluate, re, os
 from transformers import AutoTokenizer, AutoModelForTokenClassification, pipeline
 from datasets import load_dataset, Value
 import pandas as pd
+import numpy as np
 
 df = pd.read_csv(r'Resources/BioNLP2023-1A-Train.csv')
 #remove rows with empty GT
@@ -56,7 +57,6 @@ mimic = mimic.filter(lambda example: len(example["Text"]) > 0)
 
 
 
-rouge = evaluate.load("rouge")
 file = 'model/end/'
 tokenizer = AutoTokenizer.from_pretrained(file, local_files_only=True)
 model = AutoModelForTokenClassification.from_pretrained(file, local_files_only=True)
@@ -65,7 +65,25 @@ finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_s
 
 print('Model loaded')
 
+
+rouge = evaluate.load("rouge")
+
+from rouge_score import rouge_scorer
+
+def applyPyRouge(gts, preds):
+    scorer = rouge_scorer.RougeScorer(['rouge1','rouge2','rougeL'])
+    scores = scorer.score(gts, preds) 
+    return scores 
+
+    
+def compute_rouge(gt, pred):
+    sc = applyPyRouge(gt, pred)
+    return sc['rougeL'].precision, sc['rougeL'].recall, sc['rougeL'].fmeasure
+
+
 file = open('Resources/system.txt', 'w')
+metrics = {}
+precs, recs, f1s = [], [], [] 
 for ex in mimic['train']:
     predictions = []
     references = []
@@ -77,6 +95,18 @@ for ex in mimic['train']:
     file.write(words + '\n')
     references.append(ex['Summary'])
     rouge.add_batch(predictions=predictions, references=references)
+    
+    precision, recall, f1 = compute_rouge(ex['Summary'], words)
+    precs.append(precision)
+    recs.append(recall)
+    f1s.append(f1)
+    
+
+metrics["precision"] = np.mean(precs)
+metrics["recall"] = np.mean(recs)
+metrics["f1"] = np.mean(f1s)
+
+print(metrics)
 
 final_score = rouge.compute()
 
