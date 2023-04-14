@@ -160,7 +160,7 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
 label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
-model = BertCRF(checkpoint="model/end/", num_labels=3, id2label=id2label, label2id=label2id)
+model = BertCRF(checkpoint="model/ner/", num_labels=3, id2label=id2label, label2id=label2id)
 
 training_args = TrainingArguments(
     output_dir="modelcrf",
