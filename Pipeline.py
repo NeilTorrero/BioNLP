@@ -8,7 +8,10 @@ import pandas as pd
 import numpy as np
 
 test = 1
-df = pd.read_csv(r'Resources/BioNLP2023-1A-Test.csv')
+if test == 0:
+    df = pd.read_csv(r'Resources/BioNLP2023-1A-Train.csv')
+else:
+    df = pd.read_csv(r'Resources/BioNLP2023-1A-Test.csv')
 #remove rows with empty GT
 if test == 0:
     df = df.dropna(subset=['Summary']).reset_index(drop=True)
@@ -92,8 +95,10 @@ for ex in mimic['train']:
     references = []
     words = ""
     res = finetunedmodel(ex['Text'])
+    l = []
     for match in res:
-        words += match['word'] + '; '
+        l.append(match['word'])
+    words = '; '.join(list(dict.fromkeys(l)))
     predictions.append(words)
     file.write(words + '\n')
     if test == 0:

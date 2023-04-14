@@ -167,8 +167,8 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
-    logging_steps=50,
-    eval_steps=50,
+    logging_steps=10,
+    eval_steps=10,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )
@@ -210,7 +210,7 @@ model = AutoModelForTokenClassification.from_pretrained('model/ner/', local_file
 
 training_args = TrainingArguments(
     output_dir="model",
-    learning_rate=5e-5,
+    learning_rate=2e-5,
     per_device_train_batch_size=4,
     per_device_eval_batch_size=4,
     gradient_accumulation_steps=2,
@@ -218,8 +218,8 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
-    logging_steps=50,
-    eval_steps=50,
+    logging_steps=10,
+    eval_steps=10,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )
