@@ -13,7 +13,6 @@ df = df.dropna(subset=['Summary']).reset_index(drop=True)
 def cleanDeIdentification(x):
     f = re.search(r'\[\*\*(.*?)\*\*\]', str(x))
     while f:
-        print('%02d-%02d: %s' % (f.span()[0], f.span()[1], f.group()))
         nf = f.group()[3:-3]
         nf = re.sub(r'\((.*?)\)','',nf, flags=re.M)
         if re.search(r'[a-zA-Z]+', nf):
@@ -25,7 +24,6 @@ def cleanDeIdentification(x):
             nf = re.sub(r'\d{4}', 'Location?', nf, flags=re.M)
             nf = re.sub(r'\d{2}', 'Number', nf, flags=re.M)
         nf = nf.strip()
-        print("After: " + nf)
         x = nf.join([str(x)[:f.span()[0]],str(x)[f.span()[1]:]])
         f = re.search(r'\[\*\*(.*?)\*\*\]', str(x))        
     return x
@@ -67,14 +65,16 @@ finetunedmodel = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_s
 
 print('Model loaded')
 
-for ex in mimic['test']:
+file = open('Resources/system.txt', 'w')
+for ex in mimic['train']:
     predictions = []
     references = []
     words = ""
     res = finetunedmodel(ex['Text'])
     for match in res:
-        words += match['word'] + ' ; '
+        words += match['word'] + '; '
     predictions.append(words)
+    file.write(words + '\n')
     references.append(ex['Summary'])
     rouge.add_batch(predictions=predictions, references=references)
 
