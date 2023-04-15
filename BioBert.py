@@ -89,9 +89,10 @@ print(datasets)
 labels_bio = ["O", "B-Disease", "I-Disease"]
 
 # Tokenize and adapt datasets to tokenization
-#tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-v1.1")
 #tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
 #tokenizer = AutoTokenizer.from_pretrained("alvaroalon2/biobert_diseases_ner")
+#tokenizer = AutoTokenizer.from_pretrained("dmis-lab/biobert-base-cased-v1.2")
+#tokenizer = AutoTokenizer.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext")
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 example = datasets['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
@@ -152,9 +153,10 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
 label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
-#model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-v1.1", id2label=id2label, label2id=label2id)
 #model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
 #model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+#model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-base-cased-v1.2", id2label=id2label, label2id=label2id)
+#model = AutoModelForTokenClassification.from_pretrained("microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext", id2label=id2label, label2id=label2id)
 model = AutoModelForTokenClassification.from_pretrained("bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
 
 training_args = TrainingArguments(
@@ -167,8 +169,8 @@ training_args = TrainingArguments(
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
-    logging_steps=10,
-    eval_steps=10,
+    logging_steps=50,
+    eval_steps=50,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )
