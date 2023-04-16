@@ -174,9 +174,8 @@ def model_init(trial):
 training_args = TrainingArguments(
     output_dir="model",
     learning_rate=5e-5,
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
-    gradient_accumulation_steps=2,
+    per_device_train_batch_size=8,
+    per_device_eval_batch_size=8,
     num_train_epochs=1,
     weight_decay=0.01,
     evaluation_strategy="steps",
@@ -202,9 +201,9 @@ from ray import tune
 
 def ray_hp_space(trial):
     return {
-        "learning_rate": tune.uniform(5e-4, 5e-5),
+        "learning_rate": tune.uniform(1e-5, 9e-5),
         "weight_decay": tune.uniform(0.0, 0.3),
-        "per_device_train_batch_size": tune.choice([4, 8]),
+        #"per_device_train_batch_size": tune.choice([4, 8]),
         "num_train_epochs": tune.choice([1, 2, 3]),
     }
 
@@ -235,9 +234,8 @@ def model_init(trial):
 training_args = TrainingArguments(
     output_dir="model",
     learning_rate=5e-5,
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
-    gradient_accumulation_steps=2,
+    per_device_train_batch_size=8,
+    per_device_eval_batch_size=8,
     num_train_epochs=1,
     weight_decay=0.01,
     evaluation_strategy="steps",
@@ -263,9 +261,9 @@ from ray import tune
 
 def ray_hp_space(trial):
     return {
-        "learning_rate": tune.uniform(5e-4, 5e-5),
+        "learning_rate": tune.uniform(1e-5, 9e-5),
         "weight_decay": tune.uniform(0.0, 0.3),
-        "per_device_train_batch_size": tune.choice([4, 8]),
+        #"per_device_train_batch_size": tune.choice([4, 8]),
         "num_train_epochs": tune.choice([1, 2, 3]),
     }
 
