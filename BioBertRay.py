@@ -219,17 +219,12 @@ best_trial = trainer.hyperparameter_search(
 )
 
 print(best_trial)
-import glob
-files = glob.glob('ray_results/BioNER/_objective_' + best_trial.run_id + '/checkpoint_*/checkpoint-*')
-file = files[0]
 
 
-
-
-tokenizer = AutoTokenizer.from_pretrained(file, local_files_only=True)
+tokenizer = AutoTokenizer.from_pretrained('model/ner/', local_files_only=True)
 def model_init(trial):
     return AutoModelForTokenClassification.from_pretrained(
-        file,
+        'model/ner/',
         local_files_only=True,
         num_labels=3, 
         id2label=id2label, 
