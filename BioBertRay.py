@@ -214,8 +214,7 @@ best_trial = trainer.hyperparameter_search(
     hp_space=ray_hp_space,
     n_trials=9,
     keep_checkpoints_num=1,
-    local_dir="~/BioNLP/ray_results/",
-    hp_name='BioNER'
+    local_dir="~/BioNLP/ray_results/BioNER/",
     #compute_objective=compute_objective,
 )
 
