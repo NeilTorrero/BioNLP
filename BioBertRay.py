@@ -80,9 +80,9 @@ mimic = mimic.filter(lambda example: len(example["tags"]) > 0)
 
 # Merge
 datasets = DatasetDict()
-datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi['train'],mimic['train']])
-datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi['validation'],mimic['validation']])
-datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi['test'],mimic['test']])
+datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi['train']])#,mimic['train']])
+datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi['validation']])#,mimic['validation']])
+datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi['test']])#,mimic['test']])
 print(datasets)
 
 from sklearn.utils import class_weight
@@ -101,9 +101,6 @@ labels_bio = ["O", "B-Disease", "I-Disease"]
 #tokenizer = AutoTokenizer.from_pretrained("emilyalsentzer/Bio_ClinicalBERT")
 #tokenizer = AutoTokenizer.from_pretrained("alvaroalon2/biobert_diseases_ner")
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-example = datasets['train'][0]
-tokenized = tokenizer(example["tokens"], is_split_into_words=True)
-tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
 
 def tokenize_and_realign(ex):
     tokenized_ex = tokenizer(ex["tokens"], truncation=True, is_split_into_words=True)
@@ -134,6 +131,7 @@ data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
 seqeval = evaluate.load("seqeval")
 
+example = datasets['train'][0]
 labels = [labels_bio[i] for i in example["tags"]]
 
 def compute_metrics(p):
@@ -189,23 +187,7 @@ training_args = TrainingArguments(
     metric_for_best_model="loss"
 )
 
-
-class LossTrainer(Trainer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def compute_loss(self, model, inputs, return_outputs=False):
-        labels = inputs.get("labels")
-        # forward pass
-        outputs = model(**inputs)
-        logits = outputs.get("logits")
-        # compute custom loss (suppose one has 3 labels with different weights)
-        loss_fct = nn.CrossEntropyLoss(weight=class_weights.to(device))
-        loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-        return (loss, outputs) if return_outputs else loss
-
-
-trainer = Trainer(#LossTrainer(
+trainer = Trainer(
     model=None,
     args=training_args,
     train_dataset=tokenized_dataset["train"],
@@ -233,41 +215,74 @@ best_trial = trainer.hyperparameter_search(
     n_trials=9,
     keep_checkpoints_num=1,
     local_dir="~/BioNLP/ray_results/",
+    hp_name='BioNER'
     #compute_objective=compute_objective,
 )
 
 print(best_trial)
+import glob
+files = glob.glob('ray_results/BioNER/_objective_' + best_trial.run_id + '/checkpoint_*/checkpoint-*')
+file = files[0]
 
-logits, labels, _ = trainer.predict(tokenized_dataset["test"])
-predictions = np.argmax(logits, axis=-1)
 
-# Remove ignored index (special tokens)
-true_predictions = [
-    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]#(l != -100 and l != 0)]
-    for prediction, label in zip(predictions, labels)
-]
-true_labels = [
-    [labels_bio[l] for l in label if l != -100]#(l != -100 and l != 0)]
-    for label in labels
-]
 
-results = seqeval.compute(predictions=true_predictions, references=true_labels)
-print('All datasets test')
-print(results)
 
-logits, labels, _ = trainer.predict(tokenized_mimic["test"])
-predictions = np.argmax(logits, axis=-1)
+tokenizer = AutoTokenizer.from_pretrained(file, local_files_only=True)
+def model_init(trial):
+    return AutoModelForTokenClassification.from_pretrained(
+        file,
+        local_files_only=True,
+        num_labels=3, 
+        id2label=id2label, 
+        label2id=label2id, 
+        ignore_mismatched_sizes=True
+    )
 
-# Remove ignored index (special tokens)
-true_predictions = [
-    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]#(l != -100 and l != 0)]
-    for prediction, label in zip(predictions, labels)
-]
-true_labels = [
-    [labels_bio[l] for l in label if l != -100]#(l != -100 and l != 0)]
-    for label in labels
-]
+training_args = TrainingArguments(
+    output_dir="model",
+    learning_rate=5e-5,
+    per_device_train_batch_size=4,
+    per_device_eval_batch_size=4,
+    gradient_accumulation_steps=2,
+    num_train_epochs=1,
+    weight_decay=0.01,
+    evaluation_strategy="steps",
+    save_strategy="steps",
+    logging_steps=50,
+    eval_steps=50,
+    load_best_model_at_end=True,
+    metric_for_best_model="loss"
+)
 
-results = seqeval.compute(predictions=true_predictions, references=true_labels)
-print('Only MIMIC')
-print(results)
+trainer = Trainer(
+    model=None,
+    args=training_args,
+    train_dataset=tokenized_mimic["train"],
+    eval_dataset=tokenized_mimic["validation"],
+    tokenizer=tokenizer,
+    model_init=model_init,
+    data_collator=data_collator,
+    compute_metrics=compute_metrics
+)
+
+from ray import tune
+
+def ray_hp_space(trial):
+    return {
+        "learning_rate": tune.uniform(5e-4, 5e-5),
+        "weight_decay": tune.uniform(0.0, 0.3),
+        #"per_device_train_batch_size": tune.choice([4, 8, 16]),
+        "num_train_epochs": tune.choice([1, 2, 3]),
+    }
+
+best_trial = trainer.hyperparameter_search(
+    direction="maximize",
+    backend="ray",
+    hp_space=ray_hp_space,
+    n_trials=9,
+    keep_checkpoints_num=1,
+    local_dir="~/BioNLP/ray_results/MIMIC/",
+    #compute_objective=compute_objective,
+)
+
+print(best_trial)
