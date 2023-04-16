@@ -221,10 +221,10 @@ best_trial = trainer.hyperparameter_search(
 print(best_trial)
 
 
-tokenizer = AutoTokenizer.from_pretrained('model/ner/', local_files_only=True)
+tokenizer = AutoTokenizer.from_pretrained('~/BioNLP/model/ner/', local_files_only=True)
 def model_init(trial):
     return AutoModelForTokenClassification.from_pretrained(
-        'model/ner/',
+        '~/BioNLP/model/ner/',
         local_files_only=True,
         num_labels=3, 
         id2label=id2label, 
