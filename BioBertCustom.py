@@ -82,6 +82,16 @@ def tokenize_and_realign(ex):
 tokenized_mimic = mimic.map(tokenize_and_realign, batched=True)
 tokenized_mimic = tokenized_mimic.remove_columns(['tokens', 'tags'])
 
+def mask_tokens(ex):
+    ex_masked = ex
+    ranr = np.random.uniform(0, 1, len(ex["input_ids"][0]))
+    for i, token in enumerate(ex["input_ids"][0]):
+        if ranr[i] < 0.05 and ex["labels"][0][i] != -100:
+            ex_masked["input_ids"][0][i]=tokenizer.mask_token_id
+    return ex_masked
+
+tokenized_mimic["train"].set_transform(mask_tokens)
+
 from transformers import DataCollatorForTokenClassification
 data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
@@ -113,19 +123,17 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
 label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
-#model = AutoModelForTokenClassification.from_pretrained("emilyalsentzer/Bio_ClinicalBERT", id2label=id2label, label2id=label2id)
-#model = AutoModelForTokenClassification.from_pretrained("alvaroalon2/biobert_diseases_ner", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
-#model = AutoModelForTokenClassification.from_pretrained("dmis-lab/biobert-base-cased-v1.2", id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
-model = AutoModelForTokenClassification.from_pretrained("bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True)
+tokenizer = AutoTokenizer.from_pretrained('model/ner/', local_files_only=True)
+model = AutoModelForTokenClassification.from_pretrained('model/ner/', local_files_only=True)
 
 training_args = TrainingArguments(
     output_dir="model",
     learning_rate=5e-5,
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
-    gradient_accumulation_steps=2,
-    num_train_epochs=2,
-    weight_decay=0.01,
+    per_device_train_batch_size=8,
+    per_device_eval_batch_size=8,
+    #gradient_accumulation_steps=2,
+    num_train_epochs=5,
+    weight_decay=0.1,
     evaluation_strategy="steps",
     save_strategy="steps",
     logging_steps=10,
@@ -134,7 +142,7 @@ training_args = TrainingArguments(
     metric_for_best_model="loss"
 )
 
-trainer = Trainer(#LossTrainer(
+trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=tokenized_mimic["train"],
@@ -145,7 +153,6 @@ trainer = Trainer(#LossTrainer(
 )
 
 trainer.train()
-trainer.save_model('model/end/')
 
 trainer.evaluate()
 
