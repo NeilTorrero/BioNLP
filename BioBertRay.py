@@ -201,11 +201,21 @@ from ray import tune
 
 def ray_hp_space(trial):
     return {
-        "learning_rate": tune.uniform(1e-5, 9e-5),
+        "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
         "per_device_train_batch_size": tune.choice([8, 16]),
         "num_train_epochs": tune.choice([1, 2]),
     }
+
+from ray.tune.schedulers import PopulationBasedTraining
+from ray.tune.suggest.hyperopt import HyperOptSearch
+scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss', mode='min',
+    perturbation_interval=1,
+    hyperparam_mutations={
+        "learning_rate": tune.uniform(1e-5, 5e-5),
+        "weight_decay": tune.uniform(0.0, 0.2),
+        "per_device_train_batch_size": tune.choice([8, 16])
+    })
 
 best_trial = trainer.hyperparameter_search(
     direction="maximize",
@@ -214,6 +224,10 @@ best_trial = trainer.hyperparameter_search(
     n_trials=9,
     keep_checkpoints_num=1,
     local_dir="~/BioNLP/ray_results/BioNER/",
+    # https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
+    search_alg=HyperOptSearch(metric="objective", mode="max"),
+    # https://docs.ray.io/en/latest/tune/api_docs/schedulers.html
+    scheduler=scheduler
     #compute_objective=compute_objective,
 )
 
@@ -264,11 +278,21 @@ from ray import tune
 
 def ray_hp_space(trial):
     return {
-        "learning_rate": tune.uniform(1e-5, 9e-5),
+        "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
         "per_device_train_batch_size": tune.choice([8, 16]),
         "num_train_epochs": tune.choice([2, 3]),
     }
+
+from ray.tune.schedulers import PopulationBasedTraining
+from ray.tune.suggest.hyperopt import HyperOptSearch
+scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss', mode='min',
+    perturbation_interval=1,
+    hyperparam_mutations={
+        "learning_rate": tune.uniform(1e-5, 5e-5),
+        "weight_decay": tune.uniform(0.0, 0.2),
+        "per_device_train_batch_size": tune.choice([8, 16])
+    })
 
 best_trial = trainer.hyperparameter_search(
     direction="maximize",
@@ -277,6 +301,10 @@ best_trial = trainer.hyperparameter_search(
     n_trials=9,
     keep_checkpoints_num=1,
     local_dir="~/BioNLP/ray_results/MIMIC/",
+    # https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
+    search_alg=HyperOptSearch(metric="objective", mode="max"),
+    # https://docs.ray.io/en/latest/tune/api_docs/schedulers.html
+    scheduler=scheduler
     #compute_objective=compute_objective,
 )
 
