@@ -198,6 +198,8 @@ trainer = Trainer(
 )
 
 from ray import tune
+from ray.tune.schedulers import PopulationBasedTraining
+from ray.tune.search.hyperopt import HyperOptSearch
 
 def ray_hp_space(trial):
     return {
@@ -207,8 +209,6 @@ def ray_hp_space(trial):
         "num_train_epochs": tune.choice([1, 2]),
     }
 
-from ray.tune.schedulers import PopulationBasedTraining
-from ray.tune.suggest.hyperopt import HyperOptSearch
 scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss', mode='min',
     perturbation_interval=1,
     hyperparam_mutations={
@@ -284,8 +284,6 @@ def ray_hp_space(trial):
         "num_train_epochs": tune.choice([2, 3]),
     }
 
-from ray.tune.schedulers import PopulationBasedTraining
-from ray.tune.suggest.hyperopt import HyperOptSearch
 scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss', mode='min',
     perturbation_interval=1,
     hyperparam_mutations={
