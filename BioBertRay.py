@@ -208,7 +208,7 @@ def ray_hp_space(trial):
         "num_train_epochs": tune.choice([1, 2]),
     }
 
-scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss', mode='min',
+scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='eval_loss', mode='min',
     perturbation_interval=1,
     hyperparam_mutations={
         "learning_rate": tune.uniform(1e-5, 5e-5),
@@ -283,7 +283,7 @@ def ray_hp_space(trial):
         "num_train_epochs": tune.choice([2, 3]),
     }
 
-scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss', mode='min',
+scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='eval_loss', mode='min',
     perturbation_interval=1,
     hyperparam_mutations={
         "learning_rate": tune.uniform(1e-5, 5e-5),
