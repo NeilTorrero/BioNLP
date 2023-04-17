@@ -205,7 +205,6 @@ def ray_hp_space(trial):
     return {
         "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
-        "per_device_train_batch_size": tune.choice([8, 16]),
         "num_train_epochs": tune.choice([1, 2]),
     }
 
@@ -214,7 +213,6 @@ scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss
     hyperparam_mutations={
         "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
-        "per_device_train_batch_size": tune.choice([8, 16])
     })
 
 best_trial = trainer.hyperparameter_search(
@@ -280,7 +278,7 @@ def ray_hp_space(trial):
     return {
         "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
-        "per_device_train_batch_size": tune.choice([8, 16]),
+        "per_device_train_batch_size": tune.choice([4, 8]),
         "num_train_epochs": tune.choice([2, 3]),
     }
 
@@ -289,7 +287,7 @@ scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss
     hyperparam_mutations={
         "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
-        "per_device_train_batch_size": tune.choice([8, 16])
+        "per_device_train_batch_size": tune.choice([4, 8])
     })
 
 best_trial = trainer.hyperparameter_search(
