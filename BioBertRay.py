@@ -176,7 +176,7 @@ training_args = TrainingArguments(
     learning_rate=5e-5,
     per_device_train_batch_size=8,
     per_device_eval_batch_size=8,
-    num_train_epochs=1,
+    num_train_epochs=2,
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
@@ -213,6 +213,7 @@ scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss
     hyperparam_mutations={
         "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
+        "num_train_epochs": tune.choice([1, 2]),
     })
 
 best_trial = trainer.hyperparameter_search(
@@ -223,7 +224,7 @@ best_trial = trainer.hyperparameter_search(
     keep_checkpoints_num=1,
     local_dir="~/BioNLP/ray_results/BioNER/",
     # https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
-    search_alg=HyperOptSearch(metric="objective", mode="max"),
+    #search_alg=HyperOptSearch(metric="objective", mode="max"),
     # https://docs.ray.io/en/latest/tune/api_docs/schedulers.html
     scheduler=scheduler
     #compute_objective=compute_objective,
@@ -251,7 +252,7 @@ training_args = TrainingArguments(
     learning_rate=5e-5,
     per_device_train_batch_size=8,
     per_device_eval_batch_size=8,
-    num_train_epochs=1,
+    num_train_epochs=3,
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
@@ -287,7 +288,8 @@ scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='loss
     hyperparam_mutations={
         "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
-        "per_device_train_batch_size": tune.choice([4, 8])
+        "per_device_train_batch_size": tune.choice([4, 8]),
+        "num_train_epochs": tune.choice([2, 3])
     })
 
 best_trial = trainer.hyperparameter_search(
