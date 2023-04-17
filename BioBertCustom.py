@@ -13,12 +13,12 @@ from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dat
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 mimic = load_dataset('csv', data_files="Resources/BioNLP2_dataset1.csv")
-mimic = mimic['train'].train_test_split(test_size=0.2)
-test_valid = mimic['test'].train_test_split(test_size=0.5)
+#mimic = mimic['train'].train_test_split(test_size=0.2)
+#test_valid = mimic['test'].train_test_split(test_size=0.5)
 mimic = DatasetDict({
     'train': mimic['train'],
-    'test': test_valid['test'],
-    'validation': test_valid['train']
+#    'test': test_valid['test'],
+#    'validation': test_valid['train']
 })
 print(mimic)
 
