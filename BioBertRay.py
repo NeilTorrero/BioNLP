@@ -298,7 +298,7 @@ best_trial = trainer.hyperparameter_search(
     keep_checkpoints_num=1,
     local_dir="~/BioNLP/ray_results/MIMIC/",
     # https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
-    search_alg=HyperOptSearch(metric="objective", mode="max"),
+    #search_alg=HyperOptSearch(metric="objective", mode="max"),
     # https://docs.ray.io/en/latest/tune/api_docs/schedulers.html
     scheduler=scheduler
     #compute_objective=compute_objective,
