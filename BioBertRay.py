@@ -209,7 +209,7 @@ def ray_hp_space(trial):
     }
 
 scheduler = PopulationBasedTraining(time_attr='training_iteration', metric='eval_loss', mode='min', # metric='objective', mode'max'
-    perturbation_interval=1,
+    perturbation_interval=2,
     hyperparam_mutations={
         "learning_rate": tune.uniform(1e-5, 5e-5),
         "weight_decay": tune.uniform(0.0, 0.2),
@@ -221,7 +221,7 @@ best_trial = trainer.hyperparameter_search(
     backend="ray",
     hp_space=ray_hp_space,
     n_trials=4,
-    keep_checkpoints_num=1,
+    keep_checkpoints_num=4,
     local_dir="~/BioNLP/ray_results/BioNER/",
     # https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
     #search_alg=HyperOptSearch(metric="objective", mode="max"),
@@ -297,7 +297,7 @@ best_trial = trainer.hyperparameter_search(
     backend="ray",
     hp_space=ray_hp_space,
     n_trials=4,
-    keep_checkpoints_num=1,
+    keep_checkpoints_num=4,
     local_dir="~/BioNLP/ray_results/MIMIC/",
     # https://docs.ray.io/en/latest/tune/api_docs/suggestion.html
     #search_alg=HyperOptSearch(metric="objective", mode="max"),
