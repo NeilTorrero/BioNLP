@@ -16,15 +16,18 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
 mimic = load_dataset('csv', data_files="Resources/BioNLP_dataset.csv")
-mimic = mimic['train'].train_test_split(test_size=0.2)
+mimic = mimic['train'].train_test_split(test_size=0.2, seed=42)
 print(mimic)
-test_valid = mimic['test'].train_test_split(test_size=0.5)
+test_valid = mimic['test'].train_test_split(test_size=0.5, seed=42)
 mimic = DatasetDict({
     'train': mimic['train'],
     'test': test_valid['test'],
     'validation': test_valid['train']
 })
 
+Dataset.to_csv(mimic['train'], 'train1.csv')
+Dataset.to_csv(mimic['test'], 'test1.csv')
+exit()
 # Adapt BC5CDR
 #Rework chemical tags bc5cdr
 def rework_tags(ex):

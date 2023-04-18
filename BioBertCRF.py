@@ -11,9 +11,9 @@ from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dat
 bc5cdr = load_dataset("tner/bc5cdr")
 ncbi = load_dataset("ncbi_disease")
 mimic = load_dataset('csv', data_files="Resources/BioNLP2_dataset1.csv")
-mimic = mimic['train'].train_test_split(test_size=0.2)
+mimic = mimic['train'].train_test_split(test_size=0.2, seed=42)
 print(mimic)
-test_valid = mimic['test'].train_test_split(test_size=0.5)
+test_valid = mimic['test'].train_test_split(test_size=0.5, seed=42)
 mimic = DatasetDict({
     'train': mimic['train'],
     'test': test_valid['test'],
