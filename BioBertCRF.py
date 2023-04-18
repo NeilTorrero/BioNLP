@@ -49,7 +49,7 @@ mimic = mimic.filter(lambda example: len(example["tags"]) > 0)
 labels_bio = ["O", "B-Disease", "I-Disease"]
 
 # Tokenize and adapt datasets to tokenization
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+tokenizer = AutoTokenizer.from_pretrained('model/ner/', local_files_only=True)
 example = mimic['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
@@ -134,7 +134,7 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
 label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
-model = BertCRF(checkpoint="bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id)
+model = BertCRF(checkpoint='model/ner/', num_labels=3, id2label=id2label, label2id=label2id)
 
 training_args = TrainingArguments(
     output_dir="modelcrf",

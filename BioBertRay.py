@@ -25,9 +25,6 @@ mimic = DatasetDict({
     'validation': test_valid['train']
 })
 
-Dataset.to_csv(mimic['train'], 'train1.csv')
-Dataset.to_csv(mimic['test'], 'test1.csv')
-exit()
 # Adapt BC5CDR
 #Rework chemical tags bc5cdr
 def rework_tags(ex):
