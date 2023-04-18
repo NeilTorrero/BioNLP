@@ -8,8 +8,6 @@ import numpy as np
 from ast import literal_eval
 from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dataset, concatenate_datasets
 
-bc5cdr = load_dataset("tner/bc5cdr")
-ncbi = load_dataset("ncbi_disease")
 mimic = load_dataset('csv', data_files="Resources/BioNLP2_dataset1.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2, seed=42)
 print(mimic)
@@ -35,18 +33,6 @@ def rework_tags(ex):
                 ex["tags"][i][j] = 0
     return ex
 
-bc5cdr = bc5cdr.map(rework_tags, batched=True)
-bc5cdr = bc5cdr.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
-bc5cdr = bc5cdr.filter(lambda example: len(example["tags"]) > 0)
-bc5cdr = bc5cdr.filter(lambda ex: 1 in ex['tags'] or 2 in ex['tags'])
-
-# Adapt NCBI
-ncbi = ncbi.filter(lambda example: len(example["ner_tags"]) > 0)
-ncbi = ncbi.remove_columns('id')
-ncbi = ncbi.rename_column("ner_tags", "tags")
-ncbi = ncbi.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
-
-
 # Adapt MIMIC don't needed here already been done in preprocessing
 def int_tags(ex):
     ex_i = []
@@ -60,19 +46,11 @@ mimic = mimic.cast_column('tokens', Sequence(feature=Value(dtype='string', id=No
 mimic = mimic.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
 mimic = mimic.filter(lambda example: len(example["tags"]) > 0)
 
-
-# Merge
-datasets = DatasetDict()
-datasets['train'] = concatenate_datasets([bc5cdr['train'],ncbi['train'],mimic['train']])
-datasets['validation'] = concatenate_datasets([bc5cdr['validation'],ncbi['validation'],mimic['validation']])
-datasets['test'] = concatenate_datasets([bc5cdr['test'],ncbi['test'],mimic['test']])
-print(datasets)
-
 labels_bio = ["O", "B-Disease", "I-Disease"]
 
 # Tokenize and adapt datasets to tokenization
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-example = datasets['train'][0]
+example = mimic['train'][0]
 tokenized = tokenizer(example["tokens"], is_split_into_words=True)
 tokens = tokenizer.convert_ids_to_tokens(tokenized["input_ids"])
 
@@ -95,8 +73,6 @@ def tokenize_and_realign(ex):
     tokenized_ex["labels"] = labels
     return tokenized_ex
 
-tokenized_dataset = datasets.map(tokenize_and_realign, batched=True)
-tokenized_dataset = tokenized_dataset.remove_columns(['tokens', 'tags'])
 tokenized_mimic = mimic.map(tokenize_and_realign, batched=True)
 tokenized_mimic = tokenized_mimic.remove_columns(['tokens', 'tags'])
 
@@ -130,8 +106,6 @@ class BertCRF(nn.Module):
         return outputs
 
 
-
-
 seqeval = evaluate.load("seqeval")
 
 labels = [labels_bio[i] for i in example["tags"]]
@@ -160,20 +134,19 @@ def compute_metrics(p):
 id2label = {0:"O", 1:"B-Disease", 2:"I-Disease"}
 label2id = {"O":0, "B-Disease":1, "I-Disease":2}
 
-model = BertCRF(checkpoint="model/ner/", num_labels=3, id2label=id2label, label2id=label2id)
+model = BertCRF(checkpoint="bert-base-uncased", num_labels=3, id2label=id2label, label2id=label2id)
 
 training_args = TrainingArguments(
     output_dir="modelcrf",
     learning_rate=5e-5,
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
-    gradient_accumulation_steps=2,
+    per_device_train_batch_size=8,
+    per_device_eval_batch_size=8,
     num_train_epochs=4,
     weight_decay=0.01,
     evaluation_strategy="steps",
     save_strategy="steps",
-    logging_steps=50,
-    eval_steps=50,
+    logging_steps=10,
+    eval_steps=10,
     load_best_model_at_end=True,
     metric_for_best_model="loss"
 )
@@ -190,23 +163,6 @@ trainer = Trainer(
 
 trainer.train()
 trainer.evaluate()
-
-logits, labels, _ = trainer.predict(tokenized_dataset["test"])
-predictions = np.argmax(logits, axis=-1)
-
-# Remove ignored index (special tokens)
-true_predictions = [
-    [labels_bio[p] for (p, l) in zip(prediction, label) if l != -100]
-    for prediction, label in zip(predictions, labels)
-]
-true_labels = [
-    [labels_bio[l] for l in label if l != -100]
-    for label in labels
-]
-
-results = seqeval.compute(predictions=true_predictions, references=true_labels)
-print('All datasets test')
-print(results)
 
 logits, labels, _ = trainer.predict(tokenized_mimic["test"])
 predictions = np.argmax(logits, axis=-1)
