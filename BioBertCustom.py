@@ -12,19 +12,6 @@ from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dat
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-#
-# Finetune BERT for NER in medical data
-#
-import transformers
-from transformers import AutoTokenizer, AutoModel, AutoModelForTokenClassification, TrainingArguments, Trainer
-import evaluate
-import numpy as np
-import torch
-from torch import nn
-from ast import literal_eval
-from datasets import Dataset, DatasetDict, ClassLabel, Sequence, Value, load_dataset, concatenate_datasets
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 mimic = load_dataset('csv', data_files="Resources/BioNLP2_dataset1.csv")
 mimic = mimic['train'].train_test_split(test_size=0.2, seed=64)
 test_valid = mimic['test'].train_test_split(test_size=0.5, seed=64)
@@ -137,12 +124,12 @@ model = AutoModelForTokenClassification.from_pretrained('model/ner/', local_file
 
 training_args = TrainingArguments(
     output_dir="model",
-    learning_rate=5e-5,
+    learning_rate=5.5e-5,
     per_device_train_batch_size=8,
     per_device_eval_batch_size=8,
     #gradient_accumulation_steps=2,
-    num_train_epochs=5,
-    weight_decay=0.1,
+    num_train_epochs=3,
+    weight_decay=0.004,
     evaluation_strategy="steps",
     save_strategy="steps",
     logging_steps=10,
