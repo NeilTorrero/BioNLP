@@ -6,6 +6,7 @@ from transformers import AutoTokenizer, AutoModelForTokenClassification, pipelin
 from datasets import load_dataset, Value
 import pandas as pd
 import numpy as np
+import difflib
 
 test = 1
 if test == 0:
@@ -98,7 +99,15 @@ for ex in mimic['train']:
     l = []
     for match in res:
         l.append(match['word'])
-    words = '; '.join(list(dict.fromkeys(l)))
+    wlist = list(dict.fromkeys(l))
+    for i, e in enumerate(wlist):
+        for j, ea in enumerate(wlist):
+            if i != j:
+                if (ea in e) and len(difflib.get_close_matches(ea, [e])) == 1:
+                    wlist.pop(j)
+    words = '; '.join(wlist)
+    #words = '; '.join(list(dict.fromkeys(l)))
+    
     predictions.append(words)
     file.write(words + '\n')
     if test == 0:
