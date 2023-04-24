@@ -57,7 +57,7 @@ def mask_tokens(ex):
                 ex_masked["tokens"][0][i]=tokenizer.mask_token
         return ex_masked
 
-mimic["train"].map(mask_tokens, batched=True)
+mimic["train"] = mimic["train"].map(mask_tokens, batched=True)
 labels_bio = ["O", "B-Disease", "I-Disease"]
 
 # Tokenize and adapt datasets to tokenization
