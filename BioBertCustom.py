@@ -49,15 +49,16 @@ mimic = mimic.cast_column('tokens', Sequence(feature=Value(dtype='string', id=No
 mimic = mimic.cast_column('tags', Sequence(feature=ClassLabel(names=["O", "B-Disease", "I-Disease"], id=None), length=-1, id=None))
 mimic = mimic.filter(lambda example: len(example["tags"]) > 0)
 tokenizer = AutoTokenizer.from_pretrained('model/ner/', local_files_only=True)
-def mask_tokens(ex):
-        ex_masked = ex
-        ranr = np.random.uniform(0, 1, len(ex["tokens"][0]))
-        for i, token in enumerate(ex["tokens"][0]):
-            if ranr[i] < (40/100):
-                ex_masked["tokens"][0][i]=tokenizer.mask_token
-        return ex_masked
 
-mimic["train"] = mimic["train"].map(mask_tokens, batched=True)
+#def mask_tokens(ex):
+#        ex_masked = ex
+#        ranr = np.random.uniform(0, 1, len(ex["tokens"][0]))
+#        for i, token in enumerate(ex["tokens"][0]):
+#            if ranr[i] < (40/100):
+#                ex_masked["tokens"][0][i]=tokenizer.mask_token
+#        return ex_masked
+
+#mimic["train"] = mimic["train"].map(mask_tokens, batched=True)
 labels_bio = ["O", "B-Disease", "I-Disease"]
 
 # Tokenize and adapt datasets to tokenization
@@ -87,6 +88,15 @@ def tokenize_and_realign(ex):
 tokenized_mimic = mimic.map(tokenize_and_realign, batched=True)
 tokenized_mimic = tokenized_mimic.remove_columns(['tokens', 'tags'])
 
+def mask_tokens(ex):
+    ex_masked = ex
+    ranr = np.random.uniform(0, 1, len(ex["input_ids"][0]))
+    for i, token in enumerate(ex["input_ids"][0]):
+        if ranr[i] < 0.4 and ex["labels"][0][i] != -100:
+            ex_masked["input_ids"][0][i]=tokenizer.mask_token_id
+    return ex_masked
+
+tokenized_mimic["train"].set_transform(mask_tokens)
 
 from transformers import DataCollatorForTokenClassification
 data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
