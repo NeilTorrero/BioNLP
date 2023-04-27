@@ -38,7 +38,7 @@ rouge = evaluate.load("rouge")
 import difflib
 import re
 
-log = open("Preprocessing/Resources/dataset_rouge.log", "w")
+log = open("Preprocessing/NER/Resources/dataset_rouge.log", "w")
 for idx, ex in enumerate(mimic['train']):
     predictions = []
     references = []
