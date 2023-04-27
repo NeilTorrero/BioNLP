@@ -6,10 +6,11 @@ Repository associated to submission to BioNLP 2023 Shared Task 1A. Problem List 
 ## Software implementation
 
 The repository is divided in 3 major sections in relation on the function each grup of the scripts carry out. The sections are the following:
-  * Preprocessing.
-  * NER.
-  * Finetuning.
+  * Preprocessing
+  * NER
+  * Finetuning
 
+Each of the sections have a folder named Resources which store the different CSV files for the scritps to load the data and generate the modified dataset.
 
 ### Preprocessing Data
 The files used to analyse the data in order to perform then data cleaning including the de-identification and exploring the issues with abbreviations, this group of files is in the [Preprocessing folder](./Preprocessing/).
@@ -44,7 +45,7 @@ This section has the code for adapting the dataset to Token classification, all 
 
 
 ### Finetuning
-The finetuning of the models and experiments code are on the [Main folder](./) having different files for the different variations
+The finetuning of the models and experiments code are on the Main folder having different files for the different variations
 
     .
     ├── BioBert.py                      # Finetuning BERT with biomedical data and MIMIC NER
