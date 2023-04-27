@@ -1,0 +1,38 @@
+name: env
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - datasets=2.10.1
+  - evaluate=0.2.2
+  - huggingface_hub=0.13.3
+  - nltk=3.8.1
+  - numpy=1.22.3
+  - pandas=1.4.3
+  - pip=22.0.3
+  - python=3.9.12
+  - pytorch=1.13.1
+  - pytorch-gpu=1.13.1
+  - pyyaml=6.0	
+  - ray-core=2.3.0
+  - ray-dashboard=2.3.0
+  - ray-default=2.3.0
+  - ray-tune=2.3.0
+  - regex=2023.3.23
+  - scikit-learn=1.2.2
+  - scipy=1.10.1
+  - seqeval=1.2.2
+  - tk=8.6.12
+  - tensorboardx=2.5
+  - torchaudio=0.13.1	
+  - tokenizers=0.13.2
+  - tqdm=4.62.3
+  - transformers=4.27.3
+  - wandb=0.14.0
+  - hyperopt
+  - pip:
+    - absl-py==1.4.0
+    - medialpy==0.0.4
+    - pytorchcrf==1.2.0
+    - rouge-score==0.1.2
