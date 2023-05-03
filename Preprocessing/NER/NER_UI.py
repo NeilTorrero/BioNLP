@@ -1,5 +1,15 @@
 #
 # UI Script to review and modify NER labeling
+# 
+#
+# In order to be able to run the script the following packages:
+#  pip install pysimplegui
+#  brew install python-tk
+#
+# Once started the UI select the csv file, select the example number and press LAUCH.
+# In the window for modifying the tags for each token, to change the tag click on the token
+# and the color will change looping for the tags de 0(grey) - B(red) - I(green) in this order.
+# To move between the examples use the NEXT & PREVIOUS buttons, and to save the changes click SAVE.
 #
 import PySimpleGUI as sg
 from ast import literal_eval
