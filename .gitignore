@@ -208,3 +208,4 @@ model/
 ray_results/
 wandb/
 model_w2t/
+Preprocessing/NER/Resources/notes.txt
