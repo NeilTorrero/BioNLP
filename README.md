@@ -1,6 +1,7 @@
 # BioNLP
 
 Repository associated to submission to BioNLP 2023 Shared Task 1A. Problem List Summarization.
+https://aclanthology.org/2023.bionlp-1.48/
 
 
 ## Software implementation
